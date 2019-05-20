@@ -5,18 +5,18 @@
   
   <title>灾备的终极目标 | 个人空间</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="测试博客">
+  <meta name="description" content="灾备是一个容易忽略的重要板块">
 <meta name="keywords" content="灾备,概念">
 <meta property="og:type" content="article">
 <meta property="og:title" content="灾备的终极目标">
 <meta property="og:url" content="http://huaqiang.art/2019/05/17/it/index.html">
 <meta property="og:site_name" content="个人空间">
-<meta property="og:description" content="测试博客">
+<meta property="og:description" content="灾备是一个容易忽略的重要板块">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2019-05-18T15:16:47.140Z">
+<meta property="og:updated_time" content="2019-05-20T12:53:08.899Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="灾备的终极目标">
-<meta name="twitter:description" content="测试博客">
+<meta name="twitter:description" content="灾备是一个容易忽略的重要板块">
   
   
     <link rel="icon" href="/favicon.ico">
@@ -84,7 +84,139 @@
     
     <div class="article-entry typo" itemprop="articleBody">
       
-        <p>这是一个测试博客</p>
+        <h2 id="什么是灾备"><a href="#什么是灾备" class="headerlink" title="什么是灾备"></a>什么是灾备</h2><p>灾备主要分为三个发展阶段：</p>
+<ul>
+<li>整个灾备行业的起源应该是在70年代，当时主要关注的是IT系统数据、主要做的便是数据备份；</li>
+<li>随着科技发展，IT备份发展到了灾难恢复规划，也就是DRP阶段，这一阶段不仅仅是数据备份了，还包括应急预案、灾备中心管理等；</li>
+<li>再后来，人们通过业务连续性来衡量灾备的目标，也就是从DRP阶段到BCP阶段，在预案管理、灾备数据中心管理之上再加上面向业务的决策、公关等。<blockquote>
+<p>总结下：第一阶段就是数据备份，工程师就可以干的；第二阶段需要建设灾备数据中心，灾备架构设计等，这个就需要至少IT负责人才能干；第三阶段涉及到业务，包括灾难发生后的各种应急预案，危机公关等，这个至少需要CXO以上级别参与才能办的到。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="RTO-RPO"><a href="#RTO-RPO" class="headerlink" title="RTO/RPO"></a>RTO/RPO</h2><ul>
+<li><p>RTO：Recovery Time Objective,是指灾难发生后，从IT系统宕机导致业务停顿之时开始，到IT系统恢复至可以支持各部门运作、恢复运营之时，此两点之间的时间段。</p>
+</li>
+<li><p>RPO：Recovery Point Objective,是指灾难发生后，容灾系统能把数据恢复到灾难发生前时间点的数据。是衡量灾难发生后会丢失多少生产数据的指标。可简单的描述为设施能容忍的最大数据丢失量。</p>
+</li>
+</ul>
+<blockquote>
+<p>RPO衡量的是IT系统丢失的数据量（通过时间衡量）；RTO衡量的是IT系统不可用时间，现在也有业务RTO说法，指的是业务系统不可用时间（发生灾难业务系统不可用到下一次可用时间）</p>
+</blockquote>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 使RTO和RPO无限趋向于0，是灾备的终极目标！</li>
+</ul>
+<h2 id="怎么做灾备"><a href="#怎么做灾备" class="headerlink" title="怎么做灾备"></a>怎么做灾备</h2><p>灾备怎么做？个人认为还是从第一节的三个角色给出建议。如果您是一个系统工程师或者数据库管理员，您的第一要务便是备份，永远记住不断向领导提备份重要性，做任何变更前第一件事就是备份。如果您是个IT负责人，您的第一要务就是数据安全，工程师的备份可能无法满足您对数据中心数据安全的需求，那么您一定得考虑容灾，容灾做成什么程度取决于您的预算和RPO/RTO要求。如果您是公司CEO，而您公司的业务系统承载了你们公司核心业务，那么您必须得过问你们数据中心业务系统的容灾，因为这可能影响你们公司的生死存亡。</p>
+<p>这里对于灾备分为备份和容灾两部分：</p>
+<ul>
+<li>备份：备份主要考虑两点，一个是备份工具选择；另外一个就是备份计划制定。备份计划除了临时备份，一定得考虑周期性，备份工具可选择较多，以下举例几种</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>备份工具</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>acronis</td>
+<td>一款俄罗斯的备份工具，功能强大，基本能备份任何系统，甚至android系统</td>
+</tr>
+<tr>
+<td>veeam</td>
+<td>用于备份vmware和hyper-v,无需vm中安装Agent,备份恢复速度较快</td>
+</tr>
+<tr>
+<td>NBU</td>
+<td>赛门铁克企业级备份工具，稳定耐用，适合中大型企业，不过比较贵</td>
+</tr>
+<tr>
+<td>BE</td>
+<td>赛门铁克企业级备份工具，比NBU弱一些，适合3-100台服务器的中型企业</td>
+</tr>
+<tr>
+<td>Amanda</td>
+<td>最早出现的开源备份软件,通过系统命令执行备份，免费使用，也可以选择其服务版本zmanda</td>
+</tr>
+<tr>
+<td>Bacula</td>
+<td>开源的跨平台网络备份工具，它提供了基于企业级的客户端/服务器的备份恢复解决方案,也有商业版本，可提供操作界面</td>
+</tr>
+<tr>
+<td>Asigra</td>
+<td>无代理备份工具，物理机虚机均不需要代理（在同一个子网不需要输入用户名密码就可以扫描到其他主机目录，相当牛逼），使用需要硬件key</td>
+</tr>
+<tr>
+<td>CommVault</td>
+<td>没用过，也是个很给力的备份工具</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>容灾：容灾主要考虑三点，第一是容灾数据中心选择；第二是数据复制工具选择；第三是DRP，即灾难恢复计划。容灾主要讲究的是解决方案，但是第二个数据复制技术和工具选择是灵魂，以下列举几个感觉不错的容灾工具</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>容灾工具</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SRM</td>
+<td>vmware自带解决方案，价格合适，RPO分钟级，RTO分钟级，无需安装Agent</td>
+</tr>
+<tr>
+<td>Zerto</td>
+<td>vmware、hyper-v解决方案，可以支持到AWS，Azure公有云灾备，CDP技术，RPO秒级，RTO分钟级别，无需安装Agent</td>
+</tr>
+<tr>
+<td>飞康</td>
+<td>CDP技术，存储级别解决方案，对带宽要求较大，RPO秒级、RTO秒级</td>
+</tr>
+<tr>
+<td>Double-Take</td>
+<td>OS级别解决方案，需要安装Agent，RPO秒级，RTO分钟级（测试有时是小时级别）</td>
+</tr>
+<tr>
+<td>ARCserver</td>
+<td>mysql,oracle,sqlserver解决方案，需要安装Agent，RPO秒级，RTO秒级</td>
+</tr>
+<tr>
+<td>英方</td>
+<td>和double-take类似</td>
+</tr>
+<tr>
+<td>OceanMirror</td>
+<td>国产软件，类似ARCserver，比ARCserver便宜</td>
+</tr>
+<tr>
+<td>DTS</td>
+<td>阿里云数据库灾备解决方案</td>
+</tr>
+<tr>
+<td>Dataguard</td>
+<td>oracle数据库容灾解决方案</td>
+</tr>
+<tr>
+<td>AB复制</td>
+<td>mysql容灾解决方案</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>在实际项目中，容灾备份很多时候在规划中，直到出现一次问题后才提上日程。做为一个专业的IT负责人应该把风险在出问题之前解决掉，而不是事后补救。</p>
+</blockquote>
+<h2 id="未来灾备方向"><a href="#未来灾备方向" class="headerlink" title="未来灾备方向"></a>未来灾备方向</h2><p>我们之前考虑容灾的数据复制自下而上分为，存储级别（飞康、vplex），hypervisor级别(zerto、SRM)，OS级别（DT、英方），软件级别（OM、ARCserver、DG)。主要解决的冲突为，硬件故障，操作系统故障，软件故障，业务数据丢失（分为结构化和非结构化数据）等。现在比较火的是容器技术和公有云，容积技术确实适合搭建未来IT所需的超级计算集群。</p>
+<ol>
+<li>由于计算集群搭建，云的概念越来越普及，硬件级别故障，os级别故障已经在云计算架构设计中解决了，不需对单个业务系统再做容灾保护。</li>
+<li>在计算集群中非结构化数据倾向存于分布式存储，而分布式存储在设计时便考虑了容灾的特性。所以未来对非结构化数据容灾将越来越少。</li>
+<li>结构化数据存储，对非关系型数据库需求增大，关系型数据库需求逐渐减小。</li>
+</ol>
+<blockquote>
+<p>所以，个人认为未来灾备重心应该主要是在数据中心级别的分布式存储或分布式数据库架构设计上，部分在关系型数据库上。</p>
+</blockquote>
 
       
       
@@ -187,20 +319,5 @@
 
 
     </div>
-  <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-</body>
+  </body>
 </html>
