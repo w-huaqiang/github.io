@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>理解系统中的cache &amp; buffer | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="cache/buffer,系统优化必不可少的部分">
+<meta name="keywords" content="linux,概念">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解系统中的cache &amp; buffer">
+<meta property="og:url" content="http://huaqiang.art/2019/05/21/buffer_cache/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="cache/buffer,系统优化必不可少的部分">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2019-05-21T13:20:36.300Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="理解系统中的cache &amp; buffer">
+<meta name="twitter:description" content="cache/buffer,系统优化必不可少的部分">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-buffer_cache" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      理解系统中的cache &amp; buffer
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <p>在linux系统优化中，我们经常看到cache/buffer，但是什么是cache,什么是buffer呢，他们之间有没有区别？</p>
+<p>从字面意思来看，cache是缓存，buffer是缓冲。这里假设有两个设备，分别叫A和B，由于制作工艺的差别，A的处理速度远远大于B。假设A和B在接口速度上有一定的差别，A接口速度为10M/s,B接口速度为5M/s.现在B中有件事需要A处理，命名为B<sub>1</sub>， 大小为10M，如下图所示:</p>
+<p>A<------------->B(B<sub>1</sub>)</-------------></p>
+<p>那么在处理这个事件会出现这种情况，1.A拿到B<sub>1</sub>需要2s，因为B的接口只为5M/s；2.同样A处理完还给B也需要2s。在这个过程中A一半的时间都在等待传输上。</p>
+<p>若何优化这个过程呢，我们可以在A和B之间加一层：</p>
+<p>A<----->[a——–b]——&gt;B(B<sub>1</sub>,B<sub>2</sub>)</-----></p>
+<p>a的接口速度接近A，b的接口速度至少为B。那么</p>
+<ul>
+<li><p>在处理完B<sub>1</sub>后再处理B<sub>2</sub>，A就可以直接从a拿数据了，若后面还有B<sub>3</sub>，B<sub>4</sub>，B<sub>n</sub>需要处理，这将会大大节省时间，这个主要是读的操作就是是缓存，即cache的理解；</p>
+</li>
+<li><p>以上过程中我们不能忽略了A处理完B<sub>1</sub>往B写的过程。A处理完可以直接写入[a–b]，速度提升了，但不会立刻写到B，在处理完B<sub>2</sub>,B<sub>3</sub> …B<sub>n</sub>之后一起写入B，避免了对B频繁操作。这个主要是写的操作就是缓冲，即buffer的理解；</p>
+</li>
+</ul>
+<p>一张图描述如下：</p>
+<pre class="mermaid">graph BT
+      subgraph 内存
+      cache --write--> buffer
+      end
+      cache --read--> CPU
+      buffer[cache buffer] --write--> 磁盘
+      磁盘 --read--> cache[page cache]</pre>
+
+<p>网上有两个有意思的例子：</p>
+<ul>
+<li><p>假设某地发生了自然灾害（比如地震），居民缺衣少食，于是派救火车去给若干个居民点送水。<br>救火车到达第一个居民点，开闸放水，老百姓就拿着盆盆罐罐来接水。<br>假如说救火车在一个居民点停留100分钟放完了水，然后重新储水花半个小时，再开往下一个居民点。这样一个白天来来来回回的，也就是4-5个居民点。<br>但我们想想，救火车是何等存在，如果把水龙头完全打开，其强大的水压能轻易冲上10层楼以上， 10分钟就可以把水全部放完。但因为居民是拿盆罐接水，100%打开水龙头那就是给人洗澡了，所以只能打开一小部分（比如10%的流量）。但这样就降低了放水的效率（只有原来的10%了），10分钟变100分钟。<br>那么，我们是否能改进这个放水的过程，让救火车以最高效率放完水、尽快赶往下一个居民点呢？<br>方法就是：在居民点建蓄水池。<br>救火车把水放到蓄水池里，因为是以100%的效率放水，10分钟结束然后走人。居民再从蓄水池里一点一点的接水。<br>我们分析一下这个例子，就可以知道Cache的含义了。<br>救火车要给居民送水，居民要从救火车接水，就是说居民和救火车之间有交互，有联系。<br>但救火车是“高速设备”，居民是“低速设备”，低速的居民跟不上高速的救火车，所以救火车被迫降低了放水速度以适应居民。<br>为了避免这种情况，在救火车和居民之间多了一层“蓄水池（也就是Cache）”，它一方面以100%的高效和救火车打交道，另一方面以10%的低效和居民打交道，这就解放了救火车，让其以最高的效率运行，而不被低速的居民拖后腿，于是救火车只需要在一个居民点停留10分钟就可以了。</p>
+<blockquote>
+<p>从以上例子可以看出，所谓Cache，就是“为了弥补高速设备和低速设备之间的矛盾”而设立的一个中间层。因为在现实里经常出现高速设备要和低速设备打交道，结果被低速设备拖后腿的情况。</p>
+</blockquote>
+</li>
+<li><p>比如说吐鲁番的葡萄熟了，要用大卡车装葡萄运出去卖<br>果园的姑娘采摘葡萄，当然不是前手把葡萄摘下来,后手就放到卡车上，而是需要一个中间过程“箩筐”：摘葡萄→放到箩筐里→把箩筐里的葡萄倒入卡车。<br>也就是说，虽然最终目的是“把葡萄倒入卡车”，但中间必须要经过“箩筐”的转手，这里的箩筐就是Buffer。</p>
+<blockquote>
+<p>从以上例子可以看出，所谓buffer,就是是“暂时存放物品的空间”。它的引入是为了减小短期内突发I/O的影响，起到流量整形的作用。</p>
+</blockquote>
+</li>
+</ul>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2019/05/21/buffer_cache/" class="article-date">
+  <time datetime="2019-05-21T12:37:20.000Z" itemprop="datePublished">2019-05-21</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/操作系统/">操作系统</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/概念/">概念</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2019/05/17/it/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">灾备的终极目标</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
