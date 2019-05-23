@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>docker中执行top命令能否看到宿主机内存CPU信息 | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="docker中执行top命令能否看到宿主机内存CPU信息">
+<meta name="keywords" content="linux,docker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker中执行top命令能否看到宿主机内存CPU信息">
+<meta property="og:url" content="http://huaqiang.art/2019/05/23/top/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="docker中执行top命令能否看到宿主机内存CPU信息">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2019-05-23T23:50:12.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="docker中执行top命令能否看到宿主机内存CPU信息">
+<meta name="twitter:description" content="docker中执行top命令能否看到宿主机内存CPU信息">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-top" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      docker中执行top命令能否看到宿主机内存CPU信息
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <h4 id="提问：在docker中运行top命令能否看到宿主机的内存CPU信息？"><a href="#提问：在docker中运行top命令能否看到宿主机的内存CPU信息？" class="headerlink" title="提问：在docker中运行top命令能否看到宿主机的内存CPU信息？"></a>提问：在docker中运行top命令能否看到宿主机的内存CPU信息？</h4><p>回答这个问题之前我们首先想以下linux系统中的/proc目录是干什么的</p>
+<p>/proc是个伪文件系统，存在于内存之中而不是硬盘上。通过它可以和内核内部数据结构进行交互，获取 有关进程的有用信息。<br>/proc中会有以下文件:</p>
+<ul>
+<li>/proc/cpuinfo - CPU 的信息(型号, 家族, 缓存大小等)</li>
+<li>/proc/meminfo - 物理内存、交换空间等的信息</li>
+<li>/proc/mounts - 已加载的文件系统的列表</li>
+<li>/proc/devices - 可用设备的列表</li>
+<li>/proc/filesystems - 被支持的文件系统</li>
+<li>/proc/modules - 已加载的模块</li>
+<li>/proc/version - 内核版本</li>
+<li>/proc/cmdline - 系统启动时输入的内核命令行参数</li>
+<li>/proc/{pid} - 进程信息</li>
+</ul>
+<p>top正是通过/proc来获取当前内存、CPU信息的。dock er启动的容器共享操作系统内核，在容器启动的时候会挂载部分/proc里面的文件，能否通过top在docker中看到内存和CPU信息，主要看有没有挂载这些文件。</p>
+<p>那么问题又来了，需要手动挂载这些文件吗？一般来说不需要，挂载内容的多少一般和镜像有关。一般的redhat/ubuntu镜像都是会挂载内存CPU信息的，精简的dokcer镜像信息会少些，有时top得到的信息不全面。</p>
+<h4 id="另外一个问题，top能看到容器外面宿主机的进程吗？"><a href="#另外一个问题，top能看到容器外面宿主机的进程吗？" class="headerlink" title="另外一个问题，top能看到容器外面宿主机的进程吗？"></a>另外一个问题，top能看到容器外面宿主机的进程吗？</h4><p>经过上面分析top看到信息的多少取决于/proc里面内容，由于pid 命名空间的隔离，宿主机的pid信息不会被启动容器挂载，所以看不到容器外宿主机进程。</p>
+<ul>
+<li style="list-style: none"><input type="checkbox"> free -m命令原理和top类似</li>
+</ul>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2019/05/23/top/" class="article-date">
+  <time datetime="2019-05-23T12:37:20.000Z" itemprop="datePublished">2019-05-23</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/docker/">docker</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/">linux</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2019/05/21/buffer_cache/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">理解系统中的cache &amp; buffer</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
