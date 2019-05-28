@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>prometheus 配置钉钉告警 | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="alertmanager是prometheus中的告警模块，可以支持微信、钉钉等主流应用。">
+<meta name="keywords" content="prometheus,k8s,监控">
+<meta property="og:type" content="article">
+<meta property="og:title" content="prometheus 配置钉钉告警">
+<meta property="og:url" content="http://huaqiang.art/2019/05/28/alertmanager/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="alertmanager是prometheus中的告警模块，可以支持微信、钉钉等主流应用。">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2019-05-28T13:35:24.791Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="prometheus 配置钉钉告警">
+<meta name="twitter:description" content="alertmanager是prometheus中的告警模块，可以支持微信、钉钉等主流应用。">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-alertmanager" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      prometheus 配置钉钉告警
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <p>prometheus的alertmanager本身不支持直接使用钉钉告警的方式，若配置钉钉告警需要webhook插件做为组件。</p>
+<h3 id="安装钉钉告警webhook插件"><a href="#安装钉钉告警webhook插件" class="headerlink" title="安装钉钉告警webhook插件"></a>安装钉钉告警webhook插件</h3><p>由于我的prometheus和alertmanager都安装在kubernetes里面，所以钉钉插件也安装在k8s平台里面。若需要其他安装方式，可以参考<br><a href="https://github.com/timonwong/prometheus-webhook-dingtalk">钉钉插件github仓库</a></p>
+<ul>
+<li>vim dingtalk-alert-deployment.yml</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    app: dingtalk-alert</span><br><span class="line">  name: dingtalk-alert</span><br><span class="line">  namespace: monitor</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: dingtalk-alert</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: dingtalk-alert</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - image: timonwong/prometheus-webhook-dingtalk</span><br><span class="line">        command:</span><br><span class="line">        - /bin/prometheus-webhook-dingtalk</span><br><span class="line">        - --ding.profile=webhook1=https://oapi.dingtalk.com/robot/send?access_token=da1cc37cd155f73112bcbf4aa4be49c8c400786f1b38908a15fa1e9be0eee51</span><br><span class="line">        - --template.file=/usr/share/prometheus-webhook-dingtalk/template/default.tmpl</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        name: dingtalk-alert</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 8086</span><br><span class="line">          name: service</span><br><span class="line">          protocol: TCP</span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 100m</span><br><span class="line">            memory: 512Mi</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 50m</span><br><span class="line">            memory: 128Mi</span><br><span class="line">        terminationMessagePath: /dev/termination-log</span><br><span class="line">        terminationMessagePolicy: File</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - mountPath: /usr/share/prometheus-webhook-dingtalk/template/default.tmpl</span><br><span class="line">          name: dingtalk-tmpl</span><br><span class="line">          subPath: default.tmpl</span><br><span class="line">      dnsPolicy: ClusterFirst</span><br><span class="line">      volumes:</span><br><span class="line">      - configMap:</span><br><span class="line">          name: dingtalk-alert-configmap</span><br><span class="line">        name: dingtalk-tmpl</span><br></pre></td></tr></table></figure>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 注意： –ding.profile指定钉钉机器人的url，其中webhook1为自定义名称，在配置alertmanager规则中指定webhook时会使用</li>
+</ul>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 注意：–template.file指定发送告警模版文件</li>
+</ul>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 注意：–ding.profile后钉钉机器人url不可有引号，不然会报404错误，非k8s安装时需要加引号</li>
+</ul>
+<ul>
+<li><p>vim dingtalk-configmap.yml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">data:</span><br><span class="line">  default.tmpl: |</span><br><span class="line">    &#123;&#123; define &quot;__subject&quot; &#125;&#125;[&#123;&#123; .Status | toUpper &#125;&#125;&#123;&#123; if eq .Status &quot;firing&quot; &#125;&#125;:&#123;&#123; .Alerts.Firing | len &#125;&#125;&#123;&#123; end &#125;&#125;] &#123;&#123; .GroupLabels.SortedPairs.Values | join &quot; &quot; &#125;&#125; &#123;&#123; if gt (len .CommonLabels) (len .GroupLabels) &#125;&#125;(&#123;&#123; with .CommonLabels.Remove .GroupLabels.Names &#125;&#125;&#123;&#123; .Values | join &quot; &quot; &#125;&#125;&#123;&#123; end &#125;&#125;)&#123;&#123; end &#125;&#125;&#123;&#123; end &#125;&#125;</span><br><span class="line">    &#123;&#123; define &quot;__alertmanagerURL&quot; &#125;&#125;&#123;&#123; .ExternalURL &#125;&#125;/#/alerts?receiver=&#123;&#123; .Receiver &#125;&#125;&#123;&#123; end &#125;&#125;</span><br><span class="line"></span><br><span class="line">    &#123;&#123; define &quot;__text_alert_list&quot; &#125;&#125;&#123;&#123; range . &#125;&#125;</span><br><span class="line">    **告警**</span><br><span class="line">    &#123;&#123; range .Annotations.SortedPairs &#125;&#125;&gt; - &#123;&#123; .Name &#125;&#125;: &#123;&#123; .Value | markdown | html &#125;&#125;</span><br><span class="line">    &#123;&#123; end &#125;&#125;</span><br><span class="line"></span><br><span class="line">    **标签**</span><br><span class="line">    &#123;&#123; range .Labels.SortedPairs &#125;&#125;&gt; - &#123;&#123; .Name &#125;&#125;: &#123;&#123; .Value | markdown | html &#125;&#125;</span><br><span class="line">    &#123;&#123; end &#125;&#125;</span><br><span class="line">    **Source:** **http://grafana.monitor.bj.univer.top/d/xLrfYirmk/a-li-yun-gao-jing?orgId=1**</span><br><span class="line"></span><br><span class="line">    &#123;&#123; end &#125;&#125;&#123;&#123; end &#125;&#125;</span><br><span class="line"></span><br><span class="line">    &#123;&#123; define &quot;ding.link.title&quot; &#125;&#125;&#123;&#123; template &quot;__subject&quot; . &#125;&#125;&#123;&#123; end &#125;&#125;</span><br><span class="line">    &#123;&#123; define &quot;ding.link.content&quot; &#125;&#125;#### \[&#123;&#123; .Status | toUpper &#125;&#125;&#123;&#123; if eq .Status &quot;firing&quot; &#125;&#125;:&#123;&#123; .Alerts.Firing | len &#125;&#125;&#123;&#123; end &#125;&#125;\] **[&#123;&#123; index .GroupLabels &quot;alertname&quot; &#125;&#125;](&#123;&#123; template &quot;__alertmanagerURL&quot; . &#125;&#125;)**</span><br><span class="line">    &#123;&#123; template &quot;__text_alert_list&quot; .Alerts.Firing &#125;&#125;</span><br><span class="line">    &#123;&#123; end &#125;&#125;</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  creationTimestamp: 2019-05-13T07:15:10Z</span><br><span class="line">  labels:</span><br><span class="line">    app: dingtalk-alert</span><br><span class="line">  name: dingtalk-alert-configmap</span><br><span class="line">  namespace: monitor</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>vim dingtalk-service.yml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  creationTimestamp: 2019-05-13T07:15:10Z</span><br><span class="line">  labels:</span><br><span class="line">    app: dingtalk-alert</span><br><span class="line">  name: dingtalk-alert-svc</span><br><span class="line">  namespace: monitor</span><br><span class="line">  resourceVersion: &quot;31476279&quot;</span><br><span class="line">  selfLink: /api/v1/namespaces/monitor/services/dingtalk-alert-svc</span><br><span class="line">  uid: d81b6783-754e-11e9-8566-00163e10fec4</span><br><span class="line">spec:</span><br><span class="line">  clusterIP: 172.19.1.47</span><br><span class="line">  externalTrafficPolicy: Cluster</span><br><span class="line">  ports:</span><br><span class="line">  - name: service</span><br><span class="line">    nodePort: 31221</span><br><span class="line">    port: 8060</span><br><span class="line">    protocol: TCP</span><br><span class="line">    targetPort: 8060</span><br><span class="line">  selector:</span><br><span class="line">    app: dingtalk-alert</span><br><span class="line">  sessionAffinity: None</span><br><span class="line">  type: NodePort</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="修改alertmanager配置"><a href="#修改alertmanager配置" class="headerlink" title="修改alertmanager配置"></a>修改alertmanager配置</h3><ul>
+<li>alertmanager增加webhook选项，指定钉钉插件<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">alertmanager.yml: |</span><br><span class="line">  global:</span><br><span class="line">      resolve_timeout: 5m</span><br><span class="line">  receivers:</span><br><span class="line">  - name: webhook</span><br><span class="line">    webhook_configs:</span><br><span class="line">    - url: http://dingtalk-alert-svc:8060/dingtalk/ops/send</span><br><span class="line">      send_resolved: true</span><br><span class="line">  route:</span><br><span class="line">    group_interval: 5m</span><br><span class="line">    group_wait: 10s</span><br><span class="line">    receiver: webhook</span><br><span class="line">    repeat_interval: 3h</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="整体结构如下"><a href="#整体结构如下" class="headerlink" title="整体结构如下"></a>整体结构如下</h3><pre class="mermaid">graph LR
+   prometheus --send--> alertmanager
+   alertmanager --wechat_configs--> 企业微信
+   alertmanager --email_configs--> 邮件
+   alertmanager --webhook_configs--> 钉钉插件
+   alertmanager --webhook_configs--> 自定义消息平台
+   钉钉插件 --send--> 钉钉</pre>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2019/05/28/alertmanager/" class="article-date">
+  <time datetime="2019-05-28T12:30:20.000Z" itemprop="datePublished">2019-05-28</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s/">k8s</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/prometheus/">prometheus</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/监控/">监控</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2019/05/23/top/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">docker中的top命令</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
