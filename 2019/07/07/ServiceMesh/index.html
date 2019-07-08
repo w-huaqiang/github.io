@@ -13,7 +13,7 @@
 <meta property="og:site_name" content="个人空间">
 <meta property="og:description" content="服务治理在kubernetes中是非常重要的一块">
 <meta property="og:locale" content="zh-cn">
-<meta property="og:updated_time" content="2019-07-08T06:47:35.526Z">
+<meta property="og:updated_time" content="2019-07-08T06:49:48.707Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Service mesh 之 初探（一）">
 <meta name="twitter:description" content="服务治理在kubernetes中是非常重要的一块">
@@ -95,42 +95,72 @@
 <p>2017年初，随着linkerd的传入，Service Mesh进入国内技术社区。<br>国内最早翻译为“服务啮合层”，但是比较拗口，后来逐渐改为“服务网格”</p>
 <h3 id="理解service-Mesh"><a href="#理解service-Mesh" class="headerlink" title="理解service Mesh"></a>理解service Mesh</h3><p>考虑这样一个问题，如果在服务之间处理服务发现、负载均衡、超时、重试等机制该如何处理？</p>
 <ol>
-<li>我们首先想到的应该是每个微服务自己处理，由开发人员开发相关代码，如下图：<pre class="mermaid">graph TD
-subgraph service B
-subgraph 代码
-business2[业务逻辑] 
-control2[网络控制]
-end
-end
-subgraph service A
-subgraph 代码
-business1[业务逻辑] 
-control1[网络控制] --> control2[网络控制]
-control2[网络控制] --> control1[网络控制]
-end
-end</pre></li>
-<li>上面架构解决了我们的需求，但是每次开发除了业务逻辑外，还处理网络控制，这极大的增加了工作量，甚至有时网络控制这段逻辑比业务代码还要难。于是就有了一些框架，所有服务使用统一的类库进行通讯，比如Netflix oss套件，Spring Cloud框架。这样，开发人员只需少量的代码，甚至几个注释就能搞定，如下图：<pre class="mermaid">graph TD
-subgraph service B
-subgraph 代码
-business2[业务逻辑] 
-subgraph lib库
-control2[网络控制]
-end
-style control2 fill:#00FF00
-end
-end
-subgraph service A
-subgraph 代码
-business1[业务逻辑] 
-subgraph lib库
-control1[网络控制] --> control2
-control2[网络控制] --> control1[网络控制]
-style control1 fill:#00FF00
-end
-end
-end</pre></li>
-<li>在一段时间上面第二种结构满足了微服务架构的需求，但是其对框架的依赖较大，而且不能跨语言。真真的微服务架构，应该是service A无需关注service B是何种开发语言的。随着service mesh的提出，出现了以下架构：<br><pre class="mermaid">graph TD<br>subgraph service B<br>subgraph 代码<br>business2[业务逻辑]<br>end<br>subgraph sidecar<br>control2[网络控制]<br>end<br>style control2 fill:#00FF00<br>end<br>subgraph service A<br>subgraph 代码<br>business1[业务逻辑]<br>end<br>subgraph sidecar<br>control1[网络控制] –&gt; control2<br>control2[网络控制] –&gt; control1[网络控制]<br>style control1 fill:#00FF00<br>end<br>end</pre><br>在上面架构图中，把微服务之间的交互抽象出一层，做为基础设施层，这样代码的开发完全不需关注网络控制，如服务发现、负责均衡、超时重试等，也不需要每个微服务使用同一种开发语言或者使用同一种开发框架。</li>
+<li>我们首先想到的应该是每个微服务自己处理，由开发人员开发相关代码，如下图：</li>
 </ol>
+<pre class="mermaid">graph TD
+   subgraph service B
+   subgraph 代码
+   business2[业务逻辑] 
+   control2[网络控制]
+   end
+   end
+   subgraph service A
+   subgraph 代码
+   business1[业务逻辑] 
+   control1[网络控制] --> control2[网络控制]
+   control2[网络控制] --> control1[网络控制]
+   end
+   end</pre>
+
+<ol start="2">
+<li>上面架构解决了我们的需求，但是每次开发除了业务逻辑外，还处理网络控制，这极大的增加了工作量，甚至有时网络控制这段逻辑比业务代码还要难。于是就有了一些框架，所有服务使用统一的类库进行通讯，比如Netflix oss套件，Spring Cloud框架。这样，开发人员只需少量的代码，甚至几个注释就能搞定，如下图：</li>
+</ol>
+<pre class="mermaid">graph TD
+   subgraph service B
+   subgraph 代码
+   business2[业务逻辑] 
+   subgraph lib库
+   control2[网络控制]
+   end
+   style control2 fill:#00FF00
+   end
+   end
+   subgraph service A
+   subgraph 代码
+   business1[业务逻辑] 
+   subgraph lib库
+   control1[网络控制] --> control2
+   control2[网络控制] --> control1[网络控制]
+   style control1 fill:#00FF00
+   end
+   end
+   end</pre>
+
+<ol start="3">
+<li>在一段时间上面第二种结构满足了微服务架构的需求，但是其对框架的依赖较大，而且不能跨语言。真真的微服务架构，应该是service A无需关注service B是何种开发语言的。随着service mesh的提出，出现了以下架构：</li>
+</ol>
+<pre class="mermaid">graph TD
+   subgraph service B
+   subgraph 代码
+   business2[业务逻辑] 
+   end
+   subgraph sidecar
+   control2[网络控制]
+   end
+   style control2 fill:#00FF00
+   end
+   subgraph service A
+   subgraph 代码
+   business1[业务逻辑] 
+   end
+   subgraph sidecar
+   control1[网络控制] --> control2
+   control2[网络控制] --> control1[网络控制]
+   style control1 fill:#00FF00
+   end
+   end</pre>
+
+<p>在上面架构图中，把微服务之间的交互抽象出一层，做为基础设施层，这样代码的开发完全不需关注网络控制，如服务发现、负责均衡、超时重试等，也不需要每个微服务使用同一种开发语言或者使用同一种开发框架。</p>
 <p>Service Mesh的定义：Service Mesh是一个用于处理服务与服务之间通信的基础架构设施层。</p>
 <ul>
 <li style="list-style: none"><input type="checkbox" checked> 其实这种抽象分层的处理思路早在OSI七层模型中就由体现。在我们解决复杂的逻辑是不妨多采用这种思路处理问题。</li>
