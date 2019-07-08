@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>Service mesh 之 初探（一） | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="服务治理在kubernetes中是非常重要的一块">
+<meta name="keywords" content="docker,k8s,service mesh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Service mesh 之 初探（一）">
+<meta property="og:url" content="http://huaqiang.art/2019/07/07/ServiceMesh/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="服务治理在kubernetes中是非常重要的一块">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2019-07-08T06:42:54.180Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Service mesh 之 初探（一）">
+<meta name="twitter:description" content="服务治理在kubernetes中是非常重要的一块">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-ServiceMesh" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Service mesh 之 初探（一）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <h3 id="提出"><a href="#提出" class="headerlink" title="提出"></a>提出</h3><p>微服务架构最早只在以架构师为主的少数派群体中谈论，随着容器技术的爆发式发展，微服务架构再次引起了更多人的注意。在微服务架构中，各个微服务之间的流量控制、路由分发、请求监控、高质量的网络传输一直都是采用侵入式的设计思想，但是这种侵入式的开发框架会导致开发工作量的大幅增加。不过非侵入式的Service Mesh技术的出现，犹如一股春风迎面吹来。</p>
+<p>Service Mesh最早是Buoyant公司提出，该公司由两个Twitter跳槽的工程创办，并且开发了第一个Service Mesh项目linkerd，<br>2016年9月29日Buoyant CEO Willian Morgan演讲时第一次公开使用Service Mesh：</p>
+<blockquote>
+<p>原文：A service mesh is a dedicated infrastructure layer for handling service-to-service communication. It’s responsible for the reliable delivery of requests through the complex topology of services that comprise a modern, cloud native application. In practice, the service mesh is typically implemented as an array of lightweight network proxies that are deployed alongside application code, without the application needing to be aware.</p>
+</blockquote>
+<blockquote>
+<p>翻译：服务网格是一个基础设施层，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证请求可以在这些拓扑中可靠地穿梭。在实际应用当中，服务网格通常是由一系列轻量级的网络代理组成的，它们与应用程序部署在一起，但应用程序不需要知道它们的存在。</p>
+</blockquote>
+<p>2017年初，随着linkerd的传入，Service Mesh进入国内技术社区。<br>国内最早翻译为“服务啮合层”，但是比较拗口，后来逐渐改为“服务网格”</p>
+<h3 id="理解service-Mesh"><a href="#理解service-Mesh" class="headerlink" title="理解service Mesh"></a>理解service Mesh</h3><p>考虑这样一个问题，如果在服务之间处理服务发现、负载均衡、超时、重试等机制该如何处理？</p>
+<ol>
+<li><p>我们首先想到的应该是每个微服务自己处理，由开发人员开发相关代码，如下图：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">   subgraph service B</span><br><span class="line">   subgraph 代码</span><br><span class="line">   business2[业务逻辑] </span><br><span class="line">   control2[网络控制]</span><br><span class="line">   end</span><br><span class="line">   end</span><br><span class="line">   subgraph service A</span><br><span class="line">   subgraph 代码</span><br><span class="line">   business1[业务逻辑] </span><br><span class="line">   control1[网络控制] --&gt; control2[网络控制]</span><br><span class="line">   control2[网络控制] --&gt; control1[网络控制]</span><br><span class="line">   end</span><br><span class="line">   end</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>上面架构解决了我们的需求，但是每次开发除了业务逻辑外，还处理网络控制，这极大的增加了工作量，甚至有时网络控制这段逻辑比业务代码还要难。于是就有了一些框架，所有服务使用统一的类库进行通讯，比如Netflix oss套件，Spring Cloud框架。这样，开发人员只需少量的代码，甚至几个注释就能搞定，如下图：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">   subgraph service B</span><br><span class="line">   subgraph 代码</span><br><span class="line">   business2[业务逻辑] </span><br><span class="line">   subgraph lib库</span><br><span class="line">   control2[网络控制]</span><br><span class="line">   end</span><br><span class="line">   style control2 fill:#00FF00</span><br><span class="line">   end</span><br><span class="line">   end</span><br><span class="line">   subgraph service A</span><br><span class="line">   subgraph 代码</span><br><span class="line">   business1[业务逻辑] </span><br><span class="line">   subgraph lib库</span><br><span class="line">   control1[网络控制] --&gt; control2</span><br><span class="line">   control2[网络控制] --&gt; control1[网络控制]</span><br><span class="line">   style control1 fill:#00FF00</span><br><span class="line">   end</span><br><span class="line">   end</span><br><span class="line">   end</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在一段时间上面第二种结构满足了微服务架构的需求，但是其对框架的依赖较大，而且不能跨语言。真真的微服务架构，应该是service A无需关注service B是何种开发语言的。随着service mesh的提出，出现了以下架构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">graph TD</span><br><span class="line">   subgraph service B</span><br><span class="line">   subgraph 代码</span><br><span class="line">   business2[业务逻辑] </span><br><span class="line">   end</span><br><span class="line">   subgraph sidecar</span><br><span class="line">   control2[网络控制]</span><br><span class="line">   end</span><br><span class="line">   style control2 fill:#00FF00</span><br><span class="line">   end</span><br><span class="line">   subgraph service A</span><br><span class="line">   subgraph 代码</span><br><span class="line">   business1[业务逻辑] </span><br><span class="line">   end</span><br><span class="line">   subgraph sidecar</span><br><span class="line">   control1[网络控制] --&gt; control2</span><br><span class="line">   control2[网络控制] --&gt; control1[网络控制]</span><br><span class="line">   style control1 fill:#00FF00</span><br><span class="line">   end</span><br><span class="line">   end</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>在上面架构图中，把微服务之间的交互抽象出一层，做为基础设施层，这样代码的开发完全不需关注网络控制，如服务发现、负责均衡、超时重试等，也不需要每个微服务使用同一种开发语言或者使用同一种开发框架。</p>
+<p>Service Mesh的定义：Service Mesh是一个用于处理服务与服务之间通信的基础架构设施层。</p>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 其实这种抽象分层的处理思路早在OSI七层模型中就由体现。在我们解决复杂的逻辑是不妨多采用这种思路处理问题。</li>
+</ul>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2019/07/07/ServiceMesh/" class="article-date">
+  <time datetime="2019-07-07T12:37:20.000Z" itemprop="datePublished">2019-07-07</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s/">k8s</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/service-mesh/">service mesh</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2019/05/28/alertmanager/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">prometheus 配置钉钉告警</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
