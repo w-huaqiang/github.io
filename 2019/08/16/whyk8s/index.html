@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>我为什么会被kubernetes圈粉 | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="如何理解云计算">
+<meta name="keywords" content="k8s,docker,云计算">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我为什么会被kubernetes圈粉">
+<meta property="og:url" content="http://huaqiang.art/2019/08/16/whyk8s/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="如何理解云计算">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2020-01-01T13:05:30.845Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="我为什么会被kubernetes圈粉">
+<meta name="twitter:description" content="如何理解云计算">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-whyk8s" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      我为什么会被kubernetes圈粉
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <h2 id="云计算的发展"><a href="#云计算的发展" class="headerlink" title="云计算的发展"></a>云计算的发展</h2><p>云计算已经说了几十年了，现在依然是IT人嘴里常提的一个词。至于什么是云计算，网上有很多概念，这里不做概念解释，而是通过自己的理解将其分为几个阶段（不探讨公有云）</p>
+<ul>
+<li>第一阶段 每个公司都有自己的数据中心，自己的计算资源，自己的网络资源，自己的存储资源，自己的IT管理模块。</li>
+<li>第二阶段 云计算提出阶段，公司整合计算资源，网络资源，存储资源，使资源可以按需配置，灵活扩展。在这一阶段公司将资源池化，通过虚拟化技术、云计算管理界面可以在短时间内就绪一套基础环境，而不需要像第一阶段那样又一个冗长的采购审批流程。代表有vmware,openstack，其他各种私有云技术</li>
+<li>第三阶段，云计算阶段，除了需要达到第二个阶段的资源整合外，还需包含丰富的服务自制理，弹性伸缩等，计算资源，存储资源，网络资源全部由使用者定义，我们再也不讨论运维，不知道是谁在运维，是什么在运维。</li>
+<li><p>第四阶段，GOD cometh in that cloud，在我们还不知道我们需要什么的时候，他便为我们制造了一切。</p>
+</li>
+<li><p>[x] 我们目前整处在第三阶段初期的变革之中，催生了DevOps,CICD,AIOPS,NOOPS,serverless等我们憧憬的东西。</p>
+</li>
+</ul>
+<h2 id="云计算和放牛娃"><a href="#云计算和放牛娃" class="headerlink" title="云计算和放牛娃"></a>云计算和放牛娃</h2><h3 id="第一阶段到第二阶段"><a href="#第一阶段到第二阶段" class="headerlink" title="第一阶段到第二阶段"></a>第一阶段到第二阶段</h3><p>  小时候，每年暑假做的最多的一件事就是放牛。那时候每家都有一头水牛。牛的主要工作是耕地，当然需要时也会拉拉车，推推磨。没有经历的人可能不知道，其实牛并不幸苦，它干的活对我们人来说很牛X，但对它来说太小意思了，而且它的工作别说996，334都达不到。而且更多时候是我们在伺候这位牛爸爸。<br>  于是我们就想，能不能每个村共有一头牛，而不是每家都有一头牛，这样我们就爽啦。但是一头牛耕一个村的地还不把它累死。那我们能造一个累不死的超级牛吗？当然不能，我们不是造物主，得符合自然界客观规律。但是一个村有共有牛是个不错的想法，于是老王家就买了10头牛，创建了牛cloud。不想养牛的人，需要用牛的时候可以来租。从此每家的小孩子就不用放牛了，可以用这个时间来学习高科技了。如果我们把每家都理解成小企业，那么老王家就是公有云厂商，像AWS，Azure，阿里云；如果我们把这个村理解成一个企业，那么老王家就是这个公司的IT部门。</p>
+<h3 id="第二阶段到第三阶段"><a href="#第二阶段到第三阶段" class="headerlink" title="第二阶段到第三阶段"></a>第二阶段到第三阶段</h3><p>  到上面大家可能以为就万事大吉了，那你可能想错了，第一个问题：每年春耕的好日子就那么几天，过了那几天耕地下种子就会影响来年的收成，所以每年到这个时候，大家都来抢牛，为了保障能使用上牛，每家申请都是按天的，即使一天就耕那么一小时，有时候申请的牛病了这一天就耽误了。第二个问题：以前小王放牛，一头牛好放，二头牛也能放，但是10头牛就不是那么好放了。<br>  于是我们又想，老王家能不能雇10几个耕地者，这样谁家来申请就不在申请耕牛了，而是申请耕地服务，这样大家就不在看着牛了，而是考虑自己家的地有没有耕，地耕完立马释放了牛。这种方式就可以细粒度的切分资源，进一步提高牛的使用率。至于小王放牛，以前牵着放，现在可以用工具把大批草料弄回家去喂牛。从此每家都不用在那几天抢牛了，小王也不用担心放牛了。<br>  如果牛是操作系统，那么现在牛耕与李家这个事可以理解成容器，牛耕与李家也不绑定是哪头，这头牛不行，就用下一头牛，而且李家也不用担心这头牛不行，或者耕一半生病了，耕地者自然会调度和切换牛。牛耕地运行时就是内存、CPU资源了，每家只需申请牛耕地运行时。小王喂牛方式的改变就是现在运维方式的改变，以前小王和牛朝夕相处，现在牛栏里关的牛是啥颜色可能都不知道，他只需割草喂牛。</p>
+<h3 id="第三阶段到第四阶段"><a href="#第三阶段到第四阶段" class="headerlink" title="第三阶段到第四阶段"></a>第三阶段到第四阶段</h3><p>  到了上面大家可能又认为万事大吉了，那你又错了，牛会生病，耕地者会生病，大家都在学习高科技，小王的孩子小小王不想学他爸爸再和牛有关系了。不过好在学习高科技那些孩子长大了，创造了不吃草，会自己耕地的牛。</p>
+<h3 id="第四阶段"><a href="#第四阶段" class="headerlink" title="第四阶段"></a>第四阶段</h3><p>  小小小小王抬头看了一眼表，刚好12:00。回头看了下自己工位，一份8个腊八蒜，24片肥肠的腊八蒜炒肥肠放在了桌子上。不知道哪儿来的，反正就在那里。</p>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 在第二阶段到第三阶段中，牛，小王，耕地者，申请耕地的人，他们之间由谁来协调，谁来管理。目前我想比较出色的就是kubernetes了。</li>
+</ul>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2019/08/16/whyk8s/" class="article-date">
+  <time datetime="2019-08-16T13:37:20.000Z" itemprop="datePublished">2019-08-16</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s/">k8s</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/云计算/">云计算</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2019/07/07/ServiceMesh/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Service mesh 之 初探（一）</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
