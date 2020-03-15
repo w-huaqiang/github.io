@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>rook使用cephfs | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="rook是云原生的存储解决方案">
+<meta name="keywords" content="k8s,rook,分布式存储">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rook使用cephfs">
+<meta property="og:url" content="http://huaqiang.art/2020/02/17/rook-cephfs/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="rook是云原生的存储解决方案">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2020-03-15T14:05:04.786Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="rook使用cephfs">
+<meta name="twitter:description" content="rook是云原生的存储解决方案">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-rook-cephfs" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      rook使用cephfs
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <h2 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h2><ul>
+<li>默认安装好了kubernetes集群</li>
+<li>默认已经安装好了rook,安装rook参考<br><br></li>
+<li style="list-style: none"><input type="checkbox" checked> 注意: k8s外部存储有两种方式csi及flexvolume，此文件使用flexvolume，不过csi才是未来。<h2 id="创建文件系统"><a href="#创建文件系统" class="headerlink" title="创建文件系统"></a>创建文件系统</h2>编排文件如下<code>filesystem.yaml</code>,其中failureDomain为host且replicated是3时，则osd至少在3个主机上，即ceph至少需要三个存储主机。</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">kind:</span> <span class="string">CephFilesystem</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">myfs</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">rook-ceph</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="comment"># The metadata pool spec. Must use replication.</span></span><br><span class="line"><span class="attr">  metadataPool:</span></span><br><span class="line"><span class="attr">    replicated:</span></span><br><span class="line"><span class="attr">      size:</span> <span class="number">3</span></span><br><span class="line">  <span class="comment"># The list of data pool specs. Can use replication or erasure coding.</span></span><br><span class="line"><span class="attr">  dataPools:</span></span><br><span class="line"><span class="attr">    - failureDomain:</span> <span class="string">host</span></span><br><span class="line"><span class="attr">      replicated:</span></span><br><span class="line"><span class="attr">        size:</span> <span class="number">3</span></span><br><span class="line">  <span class="comment"># The metadata service (mds) configuration</span></span><br><span class="line"><span class="attr">  metadataServer:</span></span><br><span class="line">    <span class="comment"># The number of active MDS instances</span></span><br><span class="line"><span class="attr">    activeCount:</span> <span class="number">1</span></span><br><span class="line">    <span class="comment"># Whether each active MDS instance will have an active standby with a warm metadata cache for faster failover.</span></span><br><span class="line">    <span class="comment"># If false, standbys will be available, but will not have a warm cache.</span></span><br><span class="line"><span class="attr">    activeStandby:</span> <span class="literal">true</span></span><br><span class="line">    <span class="comment"># The affinity rules to apply to the mds deployment</span></span><br><span class="line"><span class="attr">    placement:</span></span><br><span class="line">    <span class="comment">#  nodeAffinity:</span></span><br><span class="line">    <span class="comment">#    requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">    <span class="comment">#      nodeSelectorTerms:</span></span><br><span class="line">    <span class="comment">#      - matchExpressions:</span></span><br><span class="line">    <span class="comment">#        - key: role</span></span><br><span class="line">    <span class="comment">#          operator: In</span></span><br><span class="line">    <span class="comment">#          values:</span></span><br><span class="line">    <span class="comment">#          - mds-node</span></span><br><span class="line">    <span class="comment">#  tolerations:</span></span><br><span class="line">    <span class="comment">#  - key: mds-node</span></span><br><span class="line">    <span class="comment">#    operator: Exists</span></span><br><span class="line">    <span class="comment">#  podAffinity:</span></span><br><span class="line">    <span class="comment">#  podAntiAffinity:</span></span><br><span class="line">    <span class="comment"># A key/value list of annotations</span></span><br><span class="line"><span class="attr">    annotations:</span></span><br><span class="line">    <span class="comment">#  key: value</span></span><br><span class="line"><span class="attr">    resources:</span></span><br><span class="line">    <span class="comment"># The requests and limits set here, allow the filesystem MDS Pod(s) to use half of one CPU core and 1 gigabyte of memory</span></span><br><span class="line">    <span class="comment">#  limits:</span></span><br><span class="line">    <span class="comment">#    cpu: "500m"</span></span><br><span class="line">    <span class="comment">#    memory: "1024Mi"</span></span><br><span class="line">    <span class="comment">#  requests:</span></span><br><span class="line">    <span class="comment">#    cpu: "500m"</span></span><br><span class="line">    <span class="comment">#    memory: "1024Mi"</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f filesystem.yaml</span><br></pre></td></tr></table></figure>
+<h2 id="deployment直接使用"><a href="#deployment直接使用" class="headerlink" title="deployment直接使用"></a>deployment直接使用</h2><p>此deployment中的pod共享文件目录，即/var/lib/registry在三个pod中是都可以读写的。编排文件<code>registry.yaml</code>如下<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">kube-registry</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">kube-registry</span></span><br><span class="line">    <span class="string">kubernetes.io/cluster-service:</span> <span class="string">"true"</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  replicas:</span> <span class="number">3</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      k8s-app:</span> <span class="string">kube-registry</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        k8s-app:</span> <span class="string">kube-registry</span></span><br><span class="line">        <span class="string">kubernetes.io/cluster-service:</span> <span class="string">"true"</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">        image:</span> <span class="attr">registry:2</span></span><br><span class="line"><span class="attr">        imagePullPolicy:</span> <span class="string">Always</span></span><br><span class="line"><span class="attr">        resources:</span></span><br><span class="line"><span class="attr">          limits:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">100</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">100</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">        env:</span></span><br><span class="line">        <span class="comment"># Configuration reference: https://docs.docker.com/registry/configuration/</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">REGISTRY_HTTP_ADDR</span></span><br><span class="line"><span class="attr">          value:</span> <span class="string">:5000</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">REGISTRY_HTTP_SECRET</span></span><br><span class="line"><span class="attr">          value:</span> <span class="string">"Ple4seCh4ngeThisN0tAVerySecretV4lue"</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY</span></span><br><span class="line"><span class="attr">          value:</span> <span class="string">/var/lib/registry</span></span><br><span class="line"><span class="attr">        volumeMounts:</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">image-store</span></span><br><span class="line"><span class="attr">          mountPath:</span> <span class="string">/var/lib/registry</span></span><br><span class="line"><span class="attr">        ports:</span></span><br><span class="line"><span class="attr">        - containerPort:</span> <span class="number">5000</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">          protocol:</span> <span class="string">TCP</span></span><br><span class="line"><span class="attr">        livenessProbe:</span></span><br><span class="line"><span class="attr">          httpGet:</span></span><br><span class="line"><span class="attr">            path:</span> <span class="string">/</span></span><br><span class="line"><span class="attr">            port:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">        readinessProbe:</span></span><br><span class="line"><span class="attr">          httpGet:</span></span><br><span class="line"><span class="attr">            path:</span> <span class="string">/</span></span><br><span class="line"><span class="attr">            port:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">      volumes:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">image-store</span></span><br><span class="line"><span class="attr">        flexVolume:</span></span><br><span class="line"><span class="attr">          driver:</span> <span class="string">ceph.rook.io/rook</span></span><br><span class="line"><span class="attr">          fsType:</span> <span class="string">ceph</span></span><br><span class="line"><span class="attr">          options:</span></span><br><span class="line"><span class="attr">            fsName:</span> <span class="string">myfs</span> <span class="comment"># name of the filesystem specified in the filesystem CRD.</span></span><br><span class="line"><span class="attr">            clusterNamespace:</span> <span class="string">rook-ceph</span> <span class="comment"># namespace where the Rook cluster is deployed</span></span><br><span class="line">            <span class="comment"># by default the path is /, but you can override and mount a specific path of the filesystem by using the path attribute</span></span><br><span class="line">            <span class="comment"># the path must exist on the filesystem, otherwise mounting the filesystem at that path will fail</span></span><br><span class="line">            <span class="comment">#path: /some/path/inside/cephfs</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f registry.yaml</span><br></pre></td></tr></table></figure>
+<h2 id="通过pv及pvc使用"><a href="#通过pv及pvc使用" class="headerlink" title="通过pv及pvc使用"></a>通过pv及pvc使用</h2><h3 id="创建pv"><a href="#创建pv" class="headerlink" title="创建pv"></a>创建pv</h3><p>pv编排文件如下<code>pv.yaml</code><br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolume</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">cephfs-pv1</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  capacity:</span></span><br><span class="line"><span class="attr">    storage:</span> <span class="number">5</span><span class="string">Gi</span></span><br><span class="line"><span class="attr">  storageClassName:</span> <span class="string">cephfs</span></span><br><span class="line"><span class="attr">  accessModes:</span></span><br><span class="line"><span class="bullet">  -</span> <span class="string">ReadWriteMany</span></span><br><span class="line"><span class="attr">  flexVolume:</span></span><br><span class="line"><span class="attr">    driver:</span> <span class="string">ceph.rook.io/rook</span></span><br><span class="line"><span class="attr">    fsType:</span> <span class="string">ceph</span></span><br><span class="line"><span class="attr">    options:</span></span><br><span class="line"><span class="attr">      clusterNamespace:</span> <span class="string">rook-ceph</span></span><br><span class="line"><span class="attr">      fsName:</span> <span class="string">myfs</span></span><br><span class="line"><span class="attr">      path:</span> <span class="string">/some/bigdata/flex</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f pv.yaml</span><br></pre></td></tr></table></figure>
+<h3 id="创建pvc"><a href="#创建pvc" class="headerlink" title="创建pvc"></a>创建pvc</h3><p>pvc编排文件如下<code>pvc.yaml</code><br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">pvc-nas</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  accessModes:</span></span><br><span class="line"><span class="bullet">    -</span> <span class="string">ReadWriteMany</span></span><br><span class="line"><span class="attr">  storageClassName:</span> <span class="string">cephfs</span></span><br><span class="line"><span class="attr">  resources:</span></span><br><span class="line"><span class="attr">    requests:</span></span><br><span class="line"><span class="attr">      storage:</span> <span class="number">5</span><span class="string">Gi</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f pvc.yaml</span><br></pre></td></tr></table></figure>
+<h3 id="创建deployment"><a href="#创建deployment" class="headerlink" title="创建deployment"></a>创建deployment</h3><p>deployment编排文件如下<code>registry2.yaml</code><br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    k8s-app:</span> <span class="string">kube-registry</span></span><br><span class="line">    <span class="string">kubernetes.io/cluster-service:</span> <span class="string">"true"</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">kube-registry</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      k8s-app:</span> <span class="string">kube-registry</span></span><br><span class="line"><span class="attr">  strategy:</span></span><br><span class="line"><span class="attr">    rollingUpdate:</span></span><br><span class="line"><span class="attr">      maxSurge:</span> <span class="number">25</span><span class="string">%</span></span><br><span class="line"><span class="attr">      maxUnavailable:</span> <span class="number">25</span><span class="string">%</span></span><br><span class="line"><span class="attr">    type:</span> <span class="string">RollingUpdate</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      creationTimestamp:</span> <span class="literal">null</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        k8s-app:</span> <span class="string">kube-registry</span></span><br><span class="line">        <span class="string">kubernetes.io/cluster-service:</span> <span class="string">"true"</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - env:</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">REGISTRY_HTTP_ADDR</span></span><br><span class="line"><span class="attr">          value:</span> <span class="string">:5000</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">REGISTRY_HTTP_SECRET</span></span><br><span class="line"><span class="attr">          value:</span> <span class="string">Ple4seCh4ngeThisN0tAVerySecretV4lue</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY</span></span><br><span class="line"><span class="attr">          value:</span> <span class="string">/var/lib/registry</span></span><br><span class="line"><span class="attr">        image:</span> <span class="attr">registry:2</span></span><br><span class="line"><span class="attr">        imagePullPolicy:</span> <span class="string">Always</span></span><br><span class="line"><span class="attr">        livenessProbe:</span></span><br><span class="line"><span class="attr">          failureThreshold:</span> <span class="number">3</span></span><br><span class="line"><span class="attr">          httpGet:</span></span><br><span class="line"><span class="attr">            path:</span> <span class="string">/</span></span><br><span class="line"><span class="attr">            port:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">            scheme:</span> <span class="string">HTTP</span></span><br><span class="line"><span class="attr">          periodSeconds:</span> <span class="number">10</span></span><br><span class="line"><span class="attr">          successThreshold:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">          timeoutSeconds:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">        name:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">        ports:</span></span><br><span class="line"><span class="attr">        - containerPort:</span> <span class="number">5000</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">          protocol:</span> <span class="string">TCP</span></span><br><span class="line"><span class="attr">        readinessProbe:</span></span><br><span class="line"><span class="attr">          failureThreshold:</span> <span class="number">3</span></span><br><span class="line"><span class="attr">          httpGet:</span></span><br><span class="line"><span class="attr">            path:</span> <span class="string">/</span></span><br><span class="line"><span class="attr">            port:</span> <span class="string">registry</span></span><br><span class="line"><span class="attr">            scheme:</span> <span class="string">HTTP</span></span><br><span class="line"><span class="attr">          periodSeconds:</span> <span class="number">10</span></span><br><span class="line"><span class="attr">          successThreshold:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">          timeoutSeconds:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">        resources:</span></span><br><span class="line"><span class="attr">          limits:</span></span><br><span class="line"><span class="attr">            cpu:</span> <span class="number">100</span><span class="string">m</span></span><br><span class="line"><span class="attr">            memory:</span> <span class="number">100</span><span class="string">Mi</span></span><br><span class="line"><span class="attr">        terminationMessagePath:</span> <span class="string">/dev/termination-log</span></span><br><span class="line"><span class="attr">        terminationMessagePolicy:</span> <span class="string">File</span></span><br><span class="line"><span class="attr">        volumeMounts:</span></span><br><span class="line"><span class="attr">        - mountPath:</span> <span class="string">/var/lib/registry</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">image-store</span></span><br><span class="line"><span class="attr">      dnsPolicy:</span> <span class="string">ClusterFirst</span></span><br><span class="line"><span class="attr">      restartPolicy:</span> <span class="string">Always</span></span><br><span class="line"><span class="attr">      schedulerName:</span> <span class="string">default-scheduler</span></span><br><span class="line"><span class="attr">      securityContext:</span> <span class="string">&#123;&#125;</span></span><br><span class="line"><span class="attr">      terminationGracePeriodSeconds:</span> <span class="number">30</span></span><br><span class="line"><span class="attr">      volumes:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">image-store</span></span><br><span class="line"><span class="attr">        persistentVolumeClaim:</span></span><br><span class="line"><span class="attr">          claimName:</span> <span class="string">pvc-nas</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f registry2.yaml</span><br></pre></td></tr></table></figure>
+<ul>
+<li style="list-style: none"><input type="checkbox" checked> 注意：虽然pv和pvc写了大小，但是在此文件系统中可用大于此值，无法做限制。</li>
+</ul>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2020/02/17/rook-cephfs/" class="article-date">
+  <time datetime="2020-02-17T12:36:21.000Z" itemprop="datePublished">2020-02-17</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s-rook-ceph/">k8s rook ceph</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/rook/">rook</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/分布式存储/">分布式存储</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2019/08/16/whyk8s/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">我为什么会被kubernetes圈粉</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  </body>
+</html>
