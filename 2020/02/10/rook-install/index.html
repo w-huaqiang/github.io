@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>rook安装及使用ceph rbd | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="rook是云原生的存储解决方案,">
+<meta name="keywords" content="k8s,rook,分布式存储">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rook安装及使用ceph rbd">
+<meta property="og:url" content="http://huaqiang.art/2020/02/10/rook-install/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="rook是云原生的存储解决方案,">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2020-03-20T03:31:30.377Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="rook安装及使用ceph rbd">
+<meta name="twitter:description" content="rook是云原生的存储解决方案,">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-rook-install" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      rook安装及使用ceph rbd
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <h2 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h2><ul>
+<li>默认安装好了kubernetes集群，版本大于1.10</li>
+<li>k8s节点至少提供5G的容量安装软件</li>
+</ul>
+<h2 id="下载rook"><a href="#下载rook" class="headerlink" title="下载rook"></a>下载rook</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#下载，以1.0.5版本为例</span></span><br><span class="line">$ wget https://github.com/rook/rook/archive/v1.0.5.tar.gz</span><br><span class="line"></span><br><span class="line"><span class="comment">#解压</span></span><br><span class="line">$ tar -xzvf v1.0.5.tar.gz</span><br></pre></td></tr></table></figure>
+<h2 id="安装rook"><a href="#安装rook" class="headerlink" title="安装rook"></a>安装rook</h2><ol>
+<li>安装相关组件</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> rook-1.0.5/cluster/examples/kubernetes/ceph/</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装common,rook在k8s中需要的role,serviceaccount等资源</span></span><br><span class="line">$ kubectl create -f common.yaml</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装operator，相当于rook的大脑，核心程序</span></span><br><span class="line">$ kubectl create -f operator.yaml</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>检查相关pod是否启动<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl -n rook-ceph get pod</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="在rook创建ceph集群"><a href="#在rook创建ceph集群" class="headerlink" title="在rook创建ceph集群"></a>在rook创建ceph集群</h2><ol>
+<li>修改目录下cluster-test.yaml文件，使其如下<code>hq-cluster.yaml</code>。<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">ceph.rook.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">CephCluster</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">rook-ceph</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">rook-ceph</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  cephVersion:</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">ceph/ceph:v14.2.1-20190430</span></span><br><span class="line"><span class="attr">    allowUnsupported:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">  dataDirHostPath:</span> <span class="string">/var/lib/rook</span></span><br><span class="line"><span class="attr">  mon:</span></span><br><span class="line"><span class="attr">    count:</span> <span class="number">3</span></span><br><span class="line"><span class="attr">    allowMultiplePerNode:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">  dashboard:</span></span><br><span class="line"><span class="attr">    enabled:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">  network:</span></span><br><span class="line"><span class="attr">    hostNetwork:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">  rbdMirroring:</span></span><br><span class="line"><span class="attr">    workers:</span> <span class="number">0</span></span><br><span class="line"><span class="attr">  annotations:</span></span><br><span class="line"><span class="attr">  resources:</span></span><br><span class="line"><span class="attr">  storage:</span> <span class="comment"># cluster level storage configuration and selection</span></span><br><span class="line"><span class="attr">    useAllNodes:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">    useAllDevices:</span> <span class="literal">false</span></span><br><span class="line"><span class="attr">    deviceFilter:</span></span><br><span class="line"><span class="attr">    location:</span></span><br><span class="line"><span class="attr">    config:</span></span><br><span class="line"><span class="attr">    nodes:</span></span><br><span class="line"><span class="attr">    - name:</span> <span class="string">"node4"</span></span><br><span class="line"><span class="attr">      devices:</span> <span class="comment"># specific devices to use for storage can be specified for each node</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdb"</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdc"</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdd"</span></span><br><span class="line"><span class="attr">      config:</span> <span class="comment"># configuration can be specified at the node level which overrides the cluster level config</span></span><br><span class="line"><span class="attr">        storeType:</span> <span class="string">filestore</span></span><br><span class="line"><span class="attr">    - name:</span> <span class="string">"node5"</span></span><br><span class="line"><span class="attr">      devices:</span> <span class="comment"># specific devices to use for storage can be specified for each node</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdb"</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdc"</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdd"</span></span><br><span class="line"><span class="attr">      config:</span> <span class="comment"># configuration can be specified at the node level which overrides the cluster level config</span></span><br><span class="line"><span class="attr">        storeType:</span> <span class="string">filestore</span></span><br><span class="line"><span class="attr">    - name:</span> <span class="string">"node6"</span></span><br><span class="line"><span class="attr">      devices:</span> <span class="comment"># specific devices to use for storage can be specified for each node</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdb"</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdc"</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">"sdd"</span></span><br><span class="line"><span class="attr">      config:</span> <span class="comment"># configuration can be specified at the node level which overrides the cluster level config</span></span><br><span class="line"><span class="attr">        storeType:</span> <span class="string">filestore</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>此配置表示:</p>
+<ul>
+<li>useAllNodes: false   不针对所有的节点，而是手动指定节点</li>
+<li>useAllDevices: false  不选择所有空闲的磁盘，而是手动指定</li>
+<li>nodes: 数组格式，指定node4上面的sdb,sdc,sdd三块盘和node5上sdb,sdc,sdd三块盘及node6上sdb,sdc,sdd</li>
+<li>storeType: filestore ceph类型使用filestore</li>
+</ul>
+<ol start="2">
+<li><p>创建该<code>hq-cluster.yaml</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl create -f hq-cluster.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>检查相关组件是否启动</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pod -n rook-ceph</span><br><span class="line">NAME                                    READY   STATUS      RESTARTS   AGE</span><br><span class="line">rook-ceph-agent-2zxz4                   1/1     Running     1          60d</span><br><span class="line">rook-ceph-agent-hrj58                   1/1     Running     1          60d</span><br><span class="line">rook-ceph-agent-m5hns                   1/1     Running     0          60d</span><br><span class="line">rook-ceph-mgr<span class="_">-a</span>-84dcffc8f6-hwlcc        1/1     Running     0          12h</span><br><span class="line">rook-ceph-mon<span class="_">-a</span>-967c6dcbd-rtm74         1/1     Running     0          3d15h</span><br><span class="line">rook-ceph-mon-b-b56bcf68c-xkj49         1/1     Running     1          60d</span><br><span class="line">rook-ceph-mon-c-5b9984bccd-jz7fw        1/1     Running     0          57d</span><br><span class="line">rook-ceph-operator-68cb95fc7c-mvczx     1/1     Running     1          3d15h</span><br><span class="line">rook-ceph-osd-0-6cd844b7db-kc7p7        1/1     Running     1          60d</span><br><span class="line">rook-ceph-osd-1-fc784fb6d-nrvpx         1/1     Running     0          3d15h</span><br><span class="line">rook-ceph-osd-2-79cf8d88f6-crcw7        1/1     Running     1          60d</span><br><span class="line">rook-ceph-osd-3-5787545c8-5chm4         1/1     Running     0          3d15h</span><br><span class="line">rook-ceph-osd-4-76b64b8974-ffmnn        1/1     Running     1          60d</span><br><span class="line">rook-ceph-osd-5-99c99748-gk7pn          1/1     Running     0          3d15h</span><br><span class="line">rook-ceph-osd-6-5dbfdf6cb7-sqr2z        1/1     Running     0          4d14h</span><br><span class="line">rook-ceph-osd-7-568f65bf8d-w475v        1/1     Running     0          4d14h</span><br><span class="line">rook-ceph-osd-8-598b9565d5-qldtn        1/1     Running     0          4d14h</span><br><span class="line">rook-ceph-osd-prepare-node4-vqst4       0/2     Completed   0          12h</span><br><span class="line">rook-ceph-osd-prepare-node5-zplb2       0/2     Completed   0          12h</span><br><span class="line">rook-ceph-osd-prepare-node6-nkldv       0/2     Completed   1          12h</span><br><span class="line">rook-discover-4ddcl                     1/1     Running     2          60d</span><br><span class="line">rook-discover-gqcht                     1/1     Running     0          60d</span><br><span class="line">rook-discover-qvwbn                     1/1     Running     1          60d</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="在k8s中创建storageclass供k8s使用"><a href="#在k8s中创建storageclass供k8s使用" class="headerlink" title="在k8s中创建storageclass供k8s使用"></a>在k8s中创建storageclass供k8s使用</h2><ol>
+<li>当前文件中包含相关资源，直接创建即可</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f storageclass.yaml</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>检查sc是否创建成功</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get sc -n rook-ceph</span><br></pre></td></tr></table></figure>
+<p>此时新创建的storageclass<code>rook-ceph-block</code>便可在k8s中使用了。</p>
+<h2 id="其他组件"><a href="#其他组件" class="headerlink" title="其他组件"></a>其他组件</h2><ol>
+<li><p>安装ceph-tools，可以执行ceph相关命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f toolbox.yaml </span><br><span class="line"></span><br><span class="line"><span class="variable">$kubectl</span> <span class="built_in">exec</span> -ti rook-ceph-tools-6544484c68-m64vz -n </span><br><span class="line">[....]$ ceph status</span><br><span class="line">  cluster:</span><br><span class="line">    id:     db4f6f7a-5606-4a7d-9eba-9b4901cd7a38</span><br><span class="line">    health: HEALTH_OK</span><br><span class="line"> </span><br><span class="line">  services:</span><br><span class="line">    mon: 3 daemons, quorum a,b,c (age 3d)</span><br><span class="line">    mgr: a(active, since 12h)</span><br><span class="line">    mds: myfs:1 &#123;0=myfs<span class="_">-a</span>=up:active&#125; 1 up:standby-replay</span><br><span class="line">    osd: 9 osds: 9 up (since 3d), 9 <span class="keyword">in</span> (since 3d)</span><br><span class="line"> </span><br><span class="line">  data:</span><br><span class="line">    pools:   3 pools, 300 pgs</span><br><span class="line">    objects: 5.55k objects, 17 GiB</span><br><span class="line">    usage:   30 GiB used, 366 GiB / 396 GiB avail</span><br><span class="line">    pgs:     300 active+clean</span><br><span class="line"> </span><br><span class="line">  io:</span><br><span class="line">    client:   1.2 KiB/s rd, 5.7 KiB/s wr, 2 op/s rd, 0 op/s wr</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>dashboard<br>在<code>cluster-test.yaml</code>有  dashboard选项，设置为true，则自动部署dashboard,查看dashboard登陆的svc为</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get svc -n rook-ceph |grep dashboard</span><br><span class="line">rook-ceph-mgr-dashboard        LoadBalancer   10.233.9.154    3.1.20.51     8443:32600/TCP      60d</span><br></pre></td></tr></table></figure></li>
+</ol>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2020/02/10/rook-install/" class="article-date">
+  <time datetime="2020-02-10T13:00:01.000Z" itemprop="datePublished">2020-02-10</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s-rook-ceph/">k8s rook ceph</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/rook/">rook</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/分布式存储/">分布式存储</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <a href="/2020/02/17/rook-cephfs/" id="article-nav-newer" class="article-nav-link-wrap newer">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          rook使用cephfs
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/08/16/whyk8s/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">我为什么会被kubernetes圈粉</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
