@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>helm安装openldap | 个人空间</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="通过certmanager管理openldap证书，开启openLDAP TLS模式">
+<meta name="keywords" content="k8s,openLDAP,cert-manager">
+<meta property="og:type" content="article">
+<meta property="og:title" content="helm安装openldap">
+<meta property="og:url" content="http://huaqiang.art/2020/04/01/openldap/index.html">
+<meta property="og:site_name" content="个人空间">
+<meta property="og:description" content="通过certmanager管理openldap证书，开启openLDAP TLS模式">
+<meta property="og:locale" content="zh-cn">
+<meta property="og:updated_time" content="2020-04-02T00:58:10.919Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="helm安装openldap">
+<meta name="twitter:description" content="通过certmanager管理openldap证书，开启openLDAP TLS模式">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/typing.css">
+  <link rel="stylesheet" href="/css/donate.css">
+  
+</head>
+</html>
+  
+    
+      <body class="dark">
+    
+  
+      <div id="container" class="container">
+        <article id="post-openldap" class="article article-type-post" itemscope itemprop="blogPost">
+  <header id="header" class="header">
+  <nav class="mobile-nav">
+    <h1 class="nickname">《传习录》</h1>
+    <ul class="mobile-nav-menu">
+      <label for="mobile-menu-toggle"><a>&#9776; Menu</a></label>
+      <input type="checkbox" id="mobile-menu-toggle">
+      <ul class="mobile-nav-link">
+        
+        <a href="/">首页</a>
+        
+        <a href="/archives">博客</a>
+        
+        <a href="/it">资源</a>
+        
+        <a href="/about">关于我</a>
+        
+      </ul>
+    </ul>
+  </nav>
+	
+		<nav id="main-nav" class="main-nav">
+	
+	
+	  <a class="main-nav-link" href="/">首页</a>
+	
+	  <a class="main-nav-link" href="/archives">博客</a>
+	
+	  <a class="main-nav-link" href="/it">资源</a>
+	
+	  <a class="main-nav-link" href="/about">关于我</a>
+	
+  </nav>
+</header>
+
+  <hr>
+  <div class="article-inner">
+    
+
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      helm安装openldap
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry typo" itemprop="articleBody">
+      
+        <h3 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h3><pre class="mermaid">graph LR
+
+client[LDAP Client] --TLS 连接--> ldap[LDAP Server]
+client -.- client.crt
+client -.- client.key
+subgraph server
+ldap -.- ca.crt
+ldap -.- ldap.crt
+ldap -.- ldap.key
+end
+ca.crt --颁发--> ldap.crt
+ca.crt --颁发--> client.crt</pre>
+
+
+
+<h3 id="openLDAP-server配置"><a href="#openLDAP-server配置" class="headerlink" title="openLDAP server配置"></a>openLDAP server配置</h3><h4 id="cert-manager生成证书"><a href="#cert-manager生成证书" class="headerlink" title="cert-manager生成证书"></a>cert-manager生成证书</h4><p>CA证书生成过程可以参考cert-manager中CA部分,此处直接通过CA的issuer创建服务器所需的certificates，其中<code>secretName</code>后面会用到，<code>commonName</code>可以写ldap server的域名</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ cat openldap-server-cert.yaml</span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Certificate</span><br><span class="line">metadata:</span><br><span class="line">  name: hq-opnldap1</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  secretName: hq-openldap1</span><br><span class="line">  issuerRef:</span><br><span class="line">    name: ca-issuer</span><br><span class="line">    kind: Issuer</span><br><span class="line">  commonName: hqopenldap.com</span><br><span class="line">$ kubectl apply -f openldap-server-cert.yaml</span><br></pre></td></tr></table></figure>
+<h4 id="helm安装openldap"><a href="#helm安装openldap" class="headerlink" title="helm安装openldap"></a>helm安装openldap</h4><ul>
+<li>检查是否包含openldap的helm仓库，仓库地址为：<a href="http://mirror.azure.cn/kubernetes/charts/">http://mirror.azure.cn/kubernetes/charts/</a></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ helm repo list</span><br><span class="line">NAME         	URL                                                                      </span><br><span class="line">stable       	http://mirror.azure.cn/kubernetes/charts/                                </span><br><span class="line"><span class="built_in">local</span>        	http://127.0.0.1:8879/charts                                             </span><br><span class="line">ali-incubator	https://aliacs-app-catalog.oss-cn-hangzhou.aliyuncs.com/charts-incubator/</span><br><span class="line">ali-stable   	https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts                   </span><br><span class="line">jetstack     	https://charts.jetstack.io</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：若没有则添加仓库</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; $ helm repo add stable http://mirror.azure.cn/kubernetes/charts/</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<ul>
+<li>查找openldap chart，并下载到本地</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ helm search openldap</span><br><span class="line">NAME           	CHART VERSION	APP VERSION	DESCRIPTION                      </span><br><span class="line">stable/openldap	1.2.3        	2.4.48     	Community developed LDAP software</span><br><span class="line">$ helm fetch stable/openldap</span><br><span class="line"><span class="comment"># 解压文件</span></span><br><span class="line">$  tar -xzvf openldap-1.2.3.tgz</span><br></pre></td></tr></table></figure>
+<ul>
+<li>修改chart中的values.yaml文件</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> openldap</span><br><span class="line">$ cat values.yaml |grep -v <span class="string">'^ *#'</span>|grep -v <span class="string">'^$'</span></span><br><span class="line">replicaCount: 1</span><br><span class="line">strategy: &#123;&#125;</span><br><span class="line">image:</span><br><span class="line">  repository: osixia/openldap</span><br><span class="line">  tag: 1.2.4</span><br><span class="line">  pullPolicy: IfNotPresent</span><br><span class="line">existingSecret: <span class="string">""</span></span><br><span class="line">tls:</span><br><span class="line">  enabled: <span class="literal">true</span></span><br><span class="line">  secret: <span class="string">"hq-openldap1"</span>  <span class="comment"># The name of a kubernetes.io/tls type secret to use for TLS</span></span><br><span class="line">  CA:</span><br><span class="line">    enabled: <span class="literal">false</span></span><br><span class="line">    secret: <span class="string">"ca-key-pair"</span>  <span class="comment"># The name of a generic secret to use for custom CA certificate (ca.crt)</span></span><br><span class="line">extraLabels: &#123;&#125;</span><br><span class="line">podAnnotations: &#123;&#125;</span><br><span class="line">service:</span><br><span class="line">  annotations: &#123;&#125;</span><br><span class="line">  clusterIP: <span class="string">""</span></span><br><span class="line">  ldapPort: 389</span><br><span class="line">  sslLdapPort: 636  <span class="comment"># Only used if tls.enabled is true</span></span><br><span class="line">  externalIPs: []</span><br><span class="line">  loadBalancerIP: <span class="string">""</span></span><br><span class="line">  loadBalancerSourceRanges: []</span><br><span class="line">  <span class="built_in">type</span>: ClusterIP</span><br><span class="line">env:</span><br><span class="line">  LDAP_ORGANISATION: <span class="string">"Example Inc."</span></span><br><span class="line">  LDAP_DOMAIN: <span class="string">"stopenldap.com"</span></span><br><span class="line">  LDAP_BACKEND: <span class="string">"hdb"</span></span><br><span class="line">  LDAP_TLS: <span class="string">"true"</span></span><br><span class="line">  LDAP_TLS_ENFORCE: <span class="string">"false"</span></span><br><span class="line">  LDAP_REMOVE_CONFIG_AFTER_SETUP: <span class="string">"true"</span></span><br><span class="line">adminPassword: admin</span><br><span class="line">configPassword: config</span><br><span class="line">persistence:</span><br><span class="line">  enabled: <span class="literal">true</span></span><br><span class="line">  accessMode: ReadWriteOnce</span><br><span class="line">  size: 2Gi</span><br><span class="line">resources: &#123;&#125;</span><br><span class="line">initResources: &#123;&#125;</span><br><span class="line">nodeSelector: </span><br><span class="line">  run: openldap</span><br><span class="line">tolerations: []</span><br><span class="line">affinity: &#123;&#125;</span><br><span class="line"><span class="built_in">test</span>:</span><br><span class="line">  enabled: <span class="literal">true</span></span><br><span class="line">  image:</span><br><span class="line">    repository: dduportal/bats</span><br><span class="line">    tag: 0.4.0</span><br></pre></td></tr></table></figure>
+<p>主要修改的地方有：1.<code>tls.enabled: true</code>     启动tls认证</p>
+<p>​                                   2.<code>tls.secret: hq-openldap1</code>   tls认证证书的secret，为cert-manager生成<code>secertNAME</code></p>
+<p>​                                   3.<code>env.LDAP_DOMAIN: &quot;stopenldap.com&quot;</code> ldap DN名称</p>
+<p>​                                   4.<code>adminPassword: admin</code>  admin的密码</p>
+<p>​                                   5.<code>configPassword: config</code>  config的密码</p>
+<p>​                                   6.<code>persistence.enabled:true</code>  设置持久化存储，默认时候default storageclass</p>
+<p>​                                   7. <code>persistence.size:2G</code> 持久化存储大小</p>
+<ul>
+<li>安装</li>
+</ul>
+<p>在当前目录下执行helm install安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ helm install --name hqopenldap --namespace default .</span><br></pre></td></tr></table></figure>
+<p>检查是否启动成功</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pod -l app=openldap</span><br><span class="line">NAME                          READY   STATUS    RESTARTS   AGE</span><br><span class="line">hqopenldap-85d59d49b4-6jl7c   1/1     Running   0          138m</span><br></pre></td></tr></table></figure>
+<h3 id="客户端测试"><a href="#客户端测试" class="headerlink" title="客户端测试"></a>客户端测试</h3><h4 id="签发客户端所需的证书和私钥"><a href="#签发客户端所需的证书和私钥" class="headerlink" title="签发客户端所需的证书和私钥"></a>签发客户端所需的证书和私钥</h4><p>此处所使用的CA issuer和ldap server中所使用的CA需要为同一个,<code>commonName</code>可以自行定义，不同客户取名不同</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ cat client-cert.yaml</span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Certificate</span><br><span class="line">metadata:</span><br><span class="line">  name: openldap-client1</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  secretName: client-test1</span><br><span class="line">  issuerRef:</span><br><span class="line">    name: ca-issuer</span><br><span class="line">    kind: Issuer</span><br><span class="line">  commonName: ldapadmin</span><br></pre></td></tr></table></figure>
+<h4 id="导出证书文件"><a href="#导出证书文件" class="headerlink" title="导出证书文件"></a>导出证书文件</h4><p>由于测试是使用本地安装的LDAP Admin Tool，所有需要把k8s中生成的证书文件拿下来</p>
+<ul>
+<li>导出证书</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get secret/client-test1 -o jsonpath=<span class="string">"&#123;['data']['tls\.crt']&#125;"</span>|base64 --decode &gt; ldap.crt</span><br></pre></td></tr></table></figure>
+<ul>
+<li>导出私钥</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get secret/client-test1 -o jsonpath=<span class="string">"&#123;['data']['tls\.key']&#125;"</span>|base64 --decode &gt; ldap.key</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意: 由于LDAP Admin Tool使用的私钥为pkcs#8，所以需要将私钥转换下</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ openssl pkcs8 -topk8 -inform PEM -<span class="keyword">in</span> ldap.key -outform pem -nocrypt -out ldap.pem</span><br></pre></td></tr></table></figure>
+<h4 id="LDAP-Admin-Tool连接"><a href="#LDAP-Admin-Tool连接" class="headerlink" title="LDAP Admin Tool连接"></a>LDAP Admin Tool连接</h4><ul>
+<li>导入证书和私钥</li>
+</ul>
+<p><code>Security</code>-&gt;<code>manage client certificates</code>-&gt;<code>Add Certificate</code>   导入证书</p>
+<p><code>Security</code>-&gt;<code>manage client certificates</code>-&gt;鼠标选中证书-<code>Set Private Key</code> 导入私钥</p>
+<ul>
+<li>连接LDAP server</li>
+</ul>
+<p>连接信息中：Base DN: dc=stopenldap,dc=com    参照helm <code>values.yaml</code>中<code>env.LDAP_DOMAIN</code></p>
+<p>​                       User DN: cn=admin,dc=stopenldap,dc=com 参照helm <code>values.yaml</code>中<code>env.LDAP_DOMAIN</code></p>
+<p>​                       Port: 636</p>
+<p>​                       Password: admin       参照helm <code>values.yaml</code>中<code>adminPassword</code></p>
+<h3 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h3><p>ldap server启动TLS时，默认需要验证client端的证书，若不想给客户端签发证书,可通过设置server端不验证证书即可，可以通过添加values.yaml中的一个参数设置:<code>env.LDAP_TLS_VERIFY_CLIENT: &quot;try&quot;</code></p>
+<blockquote>
+<p>never：不验证客户端证书。</p>
+<p>allow：检查客户端证书，没有证书或证书错误，都允许连接。</p>
+<p>try：检查客户端证书，没有证书（允许连接），证书错误（终止连接）。</p>
+<p>demand | hard | true：检查客户端证书，没有证书或证书错误都将立即终止连接。</p>
+<p>helm 安装的openldap默认为demand。</p>
+</blockquote>
+
+      
+      
+    </div>
+    <footer class="article-footer">
+      <ul class="article-meta">
+        <li>
+          <span class="label">Published Date:</span>
+          <a href="/2020/04/01/openldap/" class="article-date">
+  <time datetime="2020-04-01T14:54:12.000Z" itemprop="datePublished">2020-04-01</time>
+</a>
+
+        </li>
+        
+          <li>
+            <span class="label">Category:</span>
+            
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s/">k8s</a>
+  </div>
+
+
+          </li>
+        
+        
+          <li>
+            <span class="label">Tag:</span>
+            
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/cert-manager/">cert-manager</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/openLDAP/">openLDAP</a></li></ul>
+
+
+          </li>
+        
+        <hr>
+      </ul>
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav" class="article-nav">
+  
+    <span id="article-nav-newer" class="article-nav-link-wrap newer"></span>
+  
+  
+    <a href="/2020/03/28/cert-manager/" id="article-nav-older" class="article-nav-link-wrap older">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">k8s证书管理cert-manager</div>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+
+
+
+
+
+
+
+
+
+      </div>
+      
+    <footer id="footer" class="post-footer footer">
+      
+      <hr>
+      <div id="footerContent" class="footer-content">
+        <p>知之真切笃实处即是行，行之明觉精察处即是知。 </p><p>True and sincere knowledge is action, and conscious and sensitive action is knowledge.</p>
+
+
+      </div>
+    </footer>
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+      
+
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+
+
+<script src="/js/typing.js"></script>
+<!--[if lt IE 9]><script src="https://cdn.jsdelivr.net/npm/html5shiv@3/dist/html5shiv.min.js"></script><![endif]-->
+
+
+
+
+
+
+
+
+  <script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({theme: 'forest'});
+    }
+  </script>
+
+
+    </div>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            processEscapes: true
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax();
+        for (var i = 0; i < all.length; ++i)
+            all[i].SourceElement().parentNode.className += ' has-jax';
+    });
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>
