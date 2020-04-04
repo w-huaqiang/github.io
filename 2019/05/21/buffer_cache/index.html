@@ -15,12 +15,14 @@
 <meta property="og:site_name" content="华强的技术小站">
 <meta property="og:description" content="cache&#x2F;buffer,系统优化必不可少的部分">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huaqiang.art/assets/img/buffer.jpg">
 <meta property="article:published_time" content="2019-05-21T12:37:20.000Z">
-<meta property="article:modified_time" content="2019-05-21T13:20:36.300Z">
+<meta property="article:modified_time" content="2020-04-04T10:00:36.814Z">
 <meta property="article:author" content="王华强">
 <meta property="article:tag" content="linux">
 <meta property="article:tag" content="概念">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huaqiang.art/assets/img/buffer.jpg">
   
     <link rel="alternative" href="/atom.xml" title="华强的技术小站" type="application/atom+xml">
   
@@ -74,22 +76,22 @@
     			
             
     			
-    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
+    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">心外无物</a>
     			
             
     			
-    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">关于我</a>
+    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
     			
             
 		</nav>
 		<nav class="header-nav">
 			<div class="social">
 				
-					<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
+					<a class="github" target="_blank" href="https://github.com/w-huaqiang" title="github"><i class="icon-github"></i></a>
 		        
 					<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
 		        
-					<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
+					<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
 		        
 					<a class="mail" target="_blank" href="mailto:ithuaqiang@163.com" title="mail"><i class="icon-mail"></i></a>
 		        
@@ -128,11 +130,11 @@
 			<nav class="header-nav">
 				<div class="social">
 					
-						<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
+						<a class="github" target="_blank" href="https://github.com/w-huaqiang" title="github"><i class="icon-github"></i></a>
 			        
 						<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
 			        
-						<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
+						<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
 			        
 						<a class="mail" target="_blank" href="mailto:ithuaqiang@163.com" title="mail"><i class="icon-mail"></i></a>
 			        
@@ -181,11 +183,12 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>在linux系统优化中，我们经常看到cache/buffer，但是什么是cache,什么是buffer呢，他们之间有没有区别？</p>
+<a id="more"></a>
 <p>从字面意思来看，cache是缓存，buffer是缓冲。这里假设有两个设备，分别叫A和B，由于制作工艺的差别，A的处理速度远远大于B。假设A和B在接口速度上有一定的差别，A接口速度为10M/s,B接口速度为5M/s.现在B中有件事需要A处理，命名为B<sub>1</sub>， 大小为10M，如下图所示:</p>
-<p>A<------------->B(B<sub>1</sub>)</-------------></p>
+<p>A&lt;————-&gt;B(B<sub>1</sub>)</p>
 <p>那么在处理这个事件会出现这种情况，1.A拿到B<sub>1</sub>需要2s，因为B的接口只为5M/s；2.同样A处理完还给B也需要2s。在这个过程中A一半的时间都在等待传输上。</p>
 <p>若何优化这个过程呢，我们可以在A和B之间加一层：</p>
-<p>A<----->[a——–b]——&gt;B(B<sub>1</sub>,B<sub>2</sub>)</-----></p>
+<p>A&lt;—–&gt;[a——–b]——&gt;B(B<sub>1</sub>,B<sub>2</sub>)</p>
 <p>a的接口速度接近A，b的接口速度至少为B。那么</p>
 <ul>
 <li><p>在处理完B<sub>1</sub>后再处理B<sub>2</sub>，A就可以直接从a拿数据了，若后面还有B<sub>3</sub>，B<sub>4</sub>，B<sub>n</sub>需要处理，这将会大大节省时间，这个主要是读的操作就是是缓存，即cache的理解；</p>
@@ -194,13 +197,7 @@
 </li>
 </ul>
 <p>一张图描述如下：</p>
-<pre class="mermaid">graph BT
-      subgraph 内存
-      cache --write--> buffer
-      end
-      cache --read--> CPU
-      buffer[cache buffer] --write--> 磁盘
-      磁盘 --read--> cache[page cache]</pre>
+<img src="/assets/img/buffer.jpg" width="75%" height="50%">
 
 <p>网上有两个有意思的例子：</p>
 <ul>
@@ -467,11 +464,11 @@ MathJax.Hub.Queue(function() {
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">心外无物</a></li>
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
       
         
     </ul>
@@ -542,10 +539,6 @@ MathJax.Hub.Queue(function() {
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">云计算</a>
               </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">证书</a>
-              </li>
             
             <div class="clearfix"></div>
           </ul>
@@ -596,27 +589,15 @@ MathJax.Hub.Queue(function() {
         <ul class="search-ul">
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接1</a>
+              <a href="https://www.docker.com" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>docker官网</a>
             </li>
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接2</a>
+              <a href="https://kubernetes.io" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>kubernetes官网</a>
             </li>
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接3</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接4</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接5</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接6</a>
+              <a href="https://www.bjzdgt.com" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>我的公司</a>
             </li>
           
         </ul>
@@ -627,7 +608,7 @@ MathJax.Hub.Queue(function() {
     
     	<section class="tools-section tools-section-me" q-show="aboutme">
   	  	
-  	  		<div class="aboutme-wrap" id="js-aboutme">汝未看此花时，此花与汝同归于寂。汝来看此花时，此花颜色一时明白过来。便知此花不在汝之心外。</div>
+  	  		<div class="aboutme-wrap" id="js-aboutme">汝未看此花时，&lt;br&gt;此花与汝同归于寂。&lt;br&gt;汝来看此花时，&lt;br&gt;此花颜色一时明白过来。&lt;br&gt;便知此花不在汝之心外。</div>
   	  	
     	</section>
     

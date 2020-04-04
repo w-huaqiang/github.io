@@ -15,13 +15,14 @@
 <meta property="og:site_name" content="华强的技术小站">
 <meta property="og:description" content="k8s证书管理软件">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huaqiang.art/assets/img/cert-manager.jpg">
 <meta property="article:published_time" content="2020-03-28T11:32:22.000Z">
-<meta property="article:modified_time" content="2020-04-02T00:58:10.919Z">
+<meta property="article:modified_time" content="2020-04-04T09:53:20.008Z">
 <meta property="article:author" content="王华强">
 <meta property="article:tag" content="k8s">
 <meta property="article:tag" content="cert-manager">
-<meta property="article:tag" content="证书">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huaqiang.art/assets/img/cert-manager.jpg">
   
     <link rel="alternative" href="/atom.xml" title="华强的技术小站" type="application/atom+xml">
   
@@ -75,22 +76,22 @@
     			
             
     			
-    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
+    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">心外无物</a>
     			
             
     			
-    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">关于我</a>
+    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
     			
             
 		</nav>
 		<nav class="header-nav">
 			<div class="social">
 				
-					<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
+					<a class="github" target="_blank" href="https://github.com/w-huaqiang" title="github"><i class="icon-github"></i></a>
 		        
 					<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
 		        
-					<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
+					<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
 		        
 					<a class="mail" target="_blank" href="mailto:ithuaqiang@163.com" title="mail"><i class="icon-mail"></i></a>
 		        
@@ -129,11 +130,11 @@
 			<nav class="header-nav">
 				<div class="social">
 					
-						<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
+						<a class="github" target="_blank" href="https://github.com/w-huaqiang" title="github"><i class="icon-github"></i></a>
 			        
 						<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
 			        
-						<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
+						<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
 			        
 						<a class="mail" target="_blank" href="mailto:ithuaqiang@163.com" title="mail"><i class="icon-mail"></i></a>
 			        
@@ -181,77 +182,91 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h3 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h3><pre class="mermaid">graph TD
+        <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>cert-manager是kubernetes原生证书解决方案，可以通过多种机构颁发证书，证书最后以secret的形式存储在kubernetes中。可以支持Let’s encrypt，self signed，CA等。</p>
+<a id="more"></a>
 
- let[letencrypt issuer] --> B[cert-manager]
- ca[CA issuer] --> B[cert-manager]
- self[self cluster issuer] --> B[cert-manager]
- B --from CA issuer--> cacert(nginx.ning.com)
- B --from self cluster issuer-->selfcert(myapp.self.tech)
- B --from letsencrypt issuer--> letscert(www.nancloud.com)</pre>
-
+<h3 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h3><img src="/assets/img/cert-manager.jpg" width="75%">
 
 
 <h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><h4 id="创建资源"><a href="#创建资源" class="headerlink" title="创建资源"></a>创建资源</h4><ul>
 <li>创建crd</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Kubernetes 1.15+</span></span><br><span class="line">$ kubectl apply --validate=<span class="literal">false</span> -f https://github.com/jetstack/cert-manager/releases/download/v0.14.0/cert-manager.crds.yaml</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>helm安装</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加helm repo</span></span><br><span class="line">$ helm repo add jetstack https://charts.jetstack.io</span><br><span class="line"></span><br><span class="line"><span class="comment"># Helm v3+</span></span><br><span class="line">$ helm install \</span><br><span class="line">  cert-manager jetstack/cert-manager \</span><br><span class="line">  --namespace cert-manager \</span><br><span class="line">  --version v0.14.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># Helm v2</span></span><br><span class="line">$ helm install \</span><br><span class="line">  --name cert-manager \</span><br><span class="line">  --namespace cert-manager \</span><br><span class="line">  --version v0.14.0 \</span><br><span class="line">  jetstack/cert-manager</span><br></pre></td></tr></table></figure>
+
 <h4 id="检查"><a href="#检查" class="headerlink" title="检查"></a>检查</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pod -n cert-manager</span><br><span class="line">NAME                                       READY   STATUS    RESTARTS   AGE</span><br><span class="line">cert-manager-845c74ff94-5mdkk              1/1     Running   0          5h15m</span><br><span class="line">cert-manager-cainjector-648dd444df-h7jh5   1/1     Running   0          5h15m</span><br><span class="line">cert-manager-webhook-6dbcd48f9c-shh7z      1/1     Running   0          5h15m</span><br></pre></td></tr></table></figure>
+
+
+
 <h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><h4 id="CA"><a href="#CA" class="headerlink" title="CA"></a>CA</h4><p>手动创建根证书和私钥，或者从其他地方获取根证书及私钥。将证书存储在k8s的secret中，用来颁发证书，可以用内部的CA证书信任生成的签名证书。</p>
 <h5 id="创建根证书"><a href="#创建根证书" class="headerlink" title="创建根证书"></a>创建根证书</h5><ul>
 <li>openssl生成密钥及证书</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ openssl genrsa -out ca.key 2048</span><br><span class="line">$ openssl req -x509 -new -nodes -key ca.key -subj <span class="string">"/CN=hqtest"</span> -days 3650 -reqexts v3_req -extensions v3_ca -out ca.crt</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>导入k8s的secret</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl create secret tls ca-key-pair \</span><br><span class="line">   --cert=ca.crt \</span><br><span class="line">   --key=ca.key \</span><br><span class="line">   --namespace=default</span><br></pre></td></tr></table></figure>
+
 <h5 id="创建签发机构"><a href="#创建签发机构" class="headerlink" title="创建签发机构"></a>创建签发机构</h5><ul>
 <li><p>创建issuer,</p>
 <p>Issuer 只能用来签发自己所在 namespace 下的证书，ClusterIssuer 可以签发任意 namespace 下的证书,类似k8s中role和clusterrole</p>
 </li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ cat issuer.yaml </span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Issuer</span><br><span class="line">metadata:</span><br><span class="line">  name: ca-issuer</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  ca:</span><br><span class="line">    secretName: ca-key-pair</span><br></pre></td></tr></table></figure>
+
 <p>​    创建资源</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f issuer.yaml</span><br></pre></td></tr></table></figure>
+
 <h5 id="创建证书"><a href="#创建证书" class="headerlink" title="创建证书"></a>创建证书</h5><ul>
 <li><p>创建certtificate</p>
 <p>cert-manager 给提供了 Certificate 这个用于生成证书的自定义资源对象，但它必须在某个namespace下</p>
 </li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ cat certs.yaml </span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Certificate</span><br><span class="line">metadata:</span><br><span class="line">  name: example-com</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  secretName: example-com-tls</span><br><span class="line">  issuerRef:</span><br><span class="line">    name: ca-issuer</span><br><span class="line">    kind: Issuer</span><br><span class="line">  commonName: ning.com</span><br><span class="line">  organization:</span><br><span class="line">  - CA</span><br><span class="line">  dnsNames:</span><br><span class="line">  - ning.com</span><br><span class="line">  - nginx.ning.com</span><br></pre></td></tr></table></figure>
+
 <p>​    创建资源</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f certs.yaml</span><br></pre></td></tr></table></figure>
+
 <h5 id="ingress使用证书"><a href="#ingress使用证书" class="headerlink" title="ingress使用证书"></a>ingress使用证书</h5><ul>
 <li>创建一个nginx例子</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">$ cat nginx.yaml </span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: my-nginx</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      run: nginx</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        run: my-nginx</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: my-nginx</span><br><span class="line">        image: nginx</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 80</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: my-nginx</span><br><span class="line">  labels:</span><br><span class="line">    app: my-nginx</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">    protocol: TCP</span><br><span class="line">    name: http</span><br><span class="line">  selector:</span><br><span class="line">    run: my-nginx</span><br><span class="line">---</span><br><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: my-nginx</span><br><span class="line">  annotations:</span><br><span class="line">    kubernetes.io/ingress.class: <span class="string">"nginx"</span></span><br><span class="line">    kubernetes.io/tls-acme: <span class="string">"true"</span></span><br><span class="line">    certmanager.k8s.io/issuer: <span class="string">"ca-issuer"</span></span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: nginx.ning.com</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - backend:</span><br><span class="line">          serviceName: my-nginx</span><br><span class="line">          servicePort: 80</span><br><span class="line">        path: /</span><br><span class="line">  tls:</span><br><span class="line">  - secretName: nginx-secret</span><br><span class="line">    hosts:</span><br><span class="line">    - nginx.ning.com</span><br></pre></td></tr></table></figure>
+
 <p>​    创建资源</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f nginx.yaml</span><br></pre></td></tr></table></figure>
+
 <h4 id="自签名证书"><a href="#自签名证书" class="headerlink" title="自签名证书"></a>自签名证书</h4><h5 id="创建自签名证书Issuer"><a href="#创建自签名证书Issuer" class="headerlink" title="创建自签名证书Issuer"></a>创建自签名证书Issuer</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ cat cert-resource.yaml</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Namespace</span><br><span class="line">metadata:</span><br><span class="line">  name: cert-manager-test</span><br><span class="line">---</span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Issuer</span><br><span class="line">metadata:</span><br><span class="line">  name: <span class="built_in">test</span>-selfsigned</span><br><span class="line">  namespace: cert-manager-test</span><br><span class="line">spec:</span><br><span class="line">  selfSigned: &#123;&#125;</span><br></pre></td></tr></table></figure>
+
 <p>​    创建资源</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f cert-resource.yaml</span><br></pre></td></tr></table></figure>
+
 <h5 id="生成证书"><a href="#生成证书" class="headerlink" title="生成证书"></a><span id="jump">生成证书</span></h5><ul>
 <li>手动生成</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ cat certificate-example-com.yaml</span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Certificate</span><br><span class="line">metadata:</span><br><span class="line">  name: selfsigned-cert</span><br><span class="line">  namespace: cert-manager-test</span><br><span class="line">spec:</span><br><span class="line">  dnsNames:</span><br><span class="line">    - example.com</span><br><span class="line">  secretName: selfsigned-cert-tls</span><br><span class="line">  issuerRef:</span><br><span class="line">    name: <span class="built_in">test</span>-selfsigned</span><br></pre></td></tr></table></figure>
+
 <p>​    创建资源</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f certificate-example-com.yaml</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>自动生成</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">[root@node1 selfsigne]<span class="comment"># cat nginx-self.yaml </span></span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: myapp-deploy</span><br><span class="line">  namespace: cert-manager-test</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: myapp</span><br><span class="line">      release: canary</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: myapp</span><br><span class="line">        release: canary</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: myapp</span><br><span class="line">        image: ikubernetes/myapp:v1</span><br><span class="line">        ports:</span><br><span class="line">        - name: http</span><br><span class="line">          containerPort: 80</span><br><span class="line">---</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: myapp</span><br><span class="line">  namespace: cert-manager-test</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    app: myapp</span><br><span class="line">    release: canary</span><br><span class="line">  ports:</span><br><span class="line">  - name: http</span><br><span class="line">    port: 80 </span><br><span class="line">    targetPort: 80 <span class="comment"># pod port</span></span><br><span class="line">---</span><br><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: ingress-myapp</span><br><span class="line">  namespace: cert-manager-test</span><br><span class="line">  annotations:</span><br><span class="line">    kubernetes.io/ingress.class: nginx</span><br><span class="line">    cert-manager.io/issuer: <span class="built_in">test</span>-selfsigned</span><br><span class="line">    kubernetes.io/tls-acme: <span class="string">"true"</span></span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: myapp.self.tech</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - path: /</span><br><span class="line">        backend:</span><br><span class="line">          serviceName: myapp</span><br><span class="line">          servicePort: 80</span><br><span class="line">  tls:</span><br><span class="line">  - hosts:</span><br><span class="line">    - myapp.self.tech</span><br><span class="line">    secretName: myapp</span><br></pre></td></tr></table></figure>
+
 <p>​    创建资源</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl apply -f nginx-self.yaml</span><br></pre></td></tr></table></figure>
+
 <blockquote>
 <p>注意: 1. 自动创建证书中，标记ingress参数metadata.annotations.cert-manager.io/issuer: test-selfsigned,test-selfsigned为issuer名称</p>
-<pre><code>2. 若使用clusterissuer则参数为 metadata.annotations.cert-manager.io/cluster-issuer
-</code></pre></blockquote>
+<pre><code>2. 若使用clusterissuer则参数为 metadata.annotations.cert-manager.io/cluster-issuer</code></pre></blockquote>
 <h4 id="letsencrypt"><a href="#letsencrypt" class="headerlink" title="letsencrypt"></a>letsencrypt</h4><h5 id="创建资源clusterissuer"><a href="#创建资源clusterissuer" class="headerlink" title="创建资源clusterissuer"></a>创建资源clusterissuer</h5><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">$ cat clusterissuer.yaml </span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: ClusterIssuer</span><br><span class="line">metadata:</span><br><span class="line">  name: letsencrypt-prod</span><br><span class="line">spec:</span><br><span class="line">  acme:</span><br><span class="line">    server: https://acme-v02.api.letsencrypt.org/directory</span><br><span class="line">    email: 845789131@qq.com</span><br><span class="line">    privateKeySecretRef:</span><br><span class="line">      name: letsencrypt-prod</span><br><span class="line">    solvers:</span><br><span class="line">    - http01:</span><br><span class="line">        ingress:</span><br><span class="line">          class: nginx</span><br></pre></td></tr></table></figure>
+
 <h5 id="生成证书-1"><a href="#生成证书-1" class="headerlink" title="生成证书"></a>生成证书</h5><p>生成证书方式和其他方式类似，可手动生成，也可以ingress自动生成，参考上节<a href="#jump">生成证书</a></p>
 <blockquote>
 <p>注意：1.letsencrypt通过acme协议自动申请证书，其中包含两个sloving Challenge: http01,dns01,主要用来证明域名是属于你所有。</p>
@@ -265,10 +280,12 @@
 <li>查看ingress-controller访问方式</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get svc -n ingress-nginx</span><br><span class="line">NAME            TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE</span><br><span class="line">ingress-nginx   NodePort   10.233.21.195   &lt;none&gt;        80:30773/TCP,443:30762/TCP   13d</span><br></pre></td></tr></table></figure>
+
 <ul>
 <li>添加 /etc/hosts解析（若有内部DNS，可配置DNS）</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cat /etc/hosts</span><br><span class="line">3.1.20.110 nginx.ning.com</span><br></pre></td></tr></table></figure>
+
 <blockquote>
 <p>注意：由于ingress-controller是nodeport暴露方式，这里需要写k8s其中一个node的IP</p>
 </blockquote>
@@ -319,10 +336,6 @@
       		 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">cert-manager</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">证书</a>
         		</li>
       		
 		</ul>
@@ -536,11 +549,11 @@ MathJax.Hub.Queue(function() {
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">心外无物</a></li>
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
       
         
     </ul>
@@ -611,10 +624,6 @@ MathJax.Hub.Queue(function() {
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">云计算</a>
               </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">证书</a>
-              </li>
             
             <div class="clearfix"></div>
           </ul>
@@ -665,27 +674,15 @@ MathJax.Hub.Queue(function() {
         <ul class="search-ul">
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接1</a>
+              <a href="https://www.docker.com" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>docker官网</a>
             </li>
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接2</a>
+              <a href="https://kubernetes.io" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>kubernetes官网</a>
             </li>
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接3</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接4</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接5</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接6</a>
+              <a href="https://www.bjzdgt.com" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>我的公司</a>
             </li>
           
         </ul>
@@ -696,7 +693,7 @@ MathJax.Hub.Queue(function() {
     
     	<section class="tools-section tools-section-me" q-show="aboutme">
   	  	
-  	  		<div class="aboutme-wrap" id="js-aboutme">汝未看此花时，此花与汝同归于寂。汝来看此花时，此花颜色一时明白过来。便知此花不在汝之心外。</div>
+  	  		<div class="aboutme-wrap" id="js-aboutme">汝未看此花时，&lt;br&gt;此花与汝同归于寂。&lt;br&gt;汝来看此花时，&lt;br&gt;此花颜色一时明白过来。&lt;br&gt;便知此花不在汝之心外。</div>
   	  	
     	</section>
     

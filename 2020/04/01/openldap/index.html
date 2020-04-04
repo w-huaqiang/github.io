@@ -15,13 +15,15 @@
 <meta property="og:site_name" content="华强的技术小站">
 <meta property="og:description" content="通过certmanager管理openldap证书，开启openLDAP TLS模式">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huaqiang.art/assets/img/openldap.jpg">
 <meta property="article:published_time" content="2020-04-01T14:54:12.000Z">
-<meta property="article:modified_time" content="2020-04-03T14:05:07.045Z">
+<meta property="article:modified_time" content="2020-04-04T11:00:07.772Z">
 <meta property="article:author" content="王华强">
 <meta property="article:tag" content="openLDAP">
 <meta property="article:tag" content="k8s">
 <meta property="article:tag" content="cert-manager">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huaqiang.art/assets/img/openldap.jpg">
   
     <link rel="alternative" href="/atom.xml" title="华强的技术小站" type="application/atom+xml">
   
@@ -75,22 +77,22 @@
     			
             
     			
-    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
+    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">心外无物</a>
     			
             
     			
-    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">关于我</a>
+    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
     			
             
 		</nav>
 		<nav class="header-nav">
 			<div class="social">
 				
-					<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
+					<a class="github" target="_blank" href="https://github.com/w-huaqiang" title="github"><i class="icon-github"></i></a>
 		        
 					<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
 		        
-					<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
+					<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
 		        
 					<a class="mail" target="_blank" href="mailto:ithuaqiang@163.com" title="mail"><i class="icon-mail"></i></a>
 		        
@@ -129,11 +131,11 @@
 			<nav class="header-nav">
 				<div class="social">
 					
-						<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
+						<a class="github" target="_blank" href="https://github.com/w-huaqiang" title="github"><i class="icon-github"></i></a>
 			        
 						<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
 			        
-						<a class="rss" target="_blank" href="#" title="rss"><i class="icon-rss"></i></a>
+						<a class="rss" target="_blank" href="/atom.xml" title="rss"><i class="icon-rss"></i></a>
 			        
 						<a class="mail" target="_blank" href="mailto:ithuaqiang@163.com" title="mail"><i class="icon-mail"></i></a>
 			        
@@ -181,8 +183,9 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h3 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h3><div id="flowchart-0" class="flow-chart"></div>
+        <h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p>OpenLDAP是轻型目录访问协议（Lightweight Directory Access Protocol，LDAP）的自由和开源的实现，在其OpenLDAP许可证下发行，并已经被包含在众多流行的Linux发行版中。如果你理解微软的AD，那么他将提供和AD类似的功能。</p>
 <a id="more"></a>
+<h3 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h3><img src="/assets/img/openldap.jpg" width="80%">
 
 
 <h3 id="openLDAP-server配置"><a href="#openLDAP-server配置" class="headerlink" title="openLDAP server配置"></a>openLDAP server配置</h3><h4 id="cert-manager生成证书"><a href="#cert-manager生成证书" class="headerlink" title="cert-manager生成证书"></a>cert-manager生成证书</h4><p>CA证书生成过程可以参考cert-manager中CA部分,此处直接通过CA的issuer创建服务器所需的certificates，其中<code>secretName</code>后面会用到，<code>commonName</code>可以写ldap server的域名</p>
@@ -223,10 +226,10 @@
 </ul>
 <p>在当前目录下执行helm install安装</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ helm install --name hqopenldap --namespace default .</span><br></pre></td></tr></table></figure>
-
-<p>检查是否启动成功</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get pod -l app=openldap</span><br><span class="line">NAME                          READY   STATUS    RESTARTS   AGE</span><br><span class="line">hqopenldap-85d59d49b4-6jl7c   1/1     Running   0          138m</span><br></pre></td></tr></table></figure>
-
+<blockquote>
+<p><code>* 快速安装 *</code><br>如果不想本地保存chart，而是直接安装则可执行以下命令,其中env.LDAP_TLS_VERIFY_CLIENT=try表示client可以没有证书。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&gt;$ helm install --name hqopenldap \</span><br><span class="line">&gt;--namespace default \</span><br><span class="line">&gt;--<span class="built_in">set</span> tls.enabled=<span class="literal">true</span> \</span><br><span class="line">&gt;--<span class="built_in">set</span> tls.secret=hq-openldap1 \</span><br><span class="line">&gt;--<span class="built_in">set</span> env.LDAP_DOMAIN=stopenldap.com \</span><br><span class="line">&gt;--<span class="built_in">set</span> adminPassword=admin \</span><br><span class="line">&gt;--<span class="built_in">set</span> configPassword=config \</span><br><span class="line">&gt;--<span class="built_in">set</span> persistence.enabled=<span class="literal">true</span> \</span><br><span class="line">&gt;--<span class="built_in">set</span> persistence.size=2Gi \</span><br><span class="line">&gt;--<span class="built_in">set</span> env.LDAP_TLS_VERIFY_CLIENT=try \</span><br><span class="line">&gt;stable/openldap</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">检查是否启动成功</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line">$ kubectl get pod -l app=openldap</span><br><span class="line">NAME                          READY   STATUS    RESTARTS   AGE</span><br><span class="line">hqopenldap-85d59d49b4-6jl7c   1/1     Running   0          138m </span><br></pre></td></tr></table></figure>
+</blockquote>
 <h3 id="客户端测试"><a href="#客户端测试" class="headerlink" title="客户端测试"></a>客户端测试</h3><h4 id="签发客户端所需的证书和私钥"><a href="#签发客户端所需的证书和私钥" class="headerlink" title="签发客户端所需的证书和私钥"></a>签发客户端所需的证书和私钥</h4><p>此处所使用的CA issuer和ldap server中所使用的CA需要为同一个,<code>commonName</code>可以自行定义，不同客户取名不同</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ cat client-cert.yaml</span><br><span class="line">apiVersion: cert-manager.io/v1alpha2</span><br><span class="line">kind: Certificate</span><br><span class="line">metadata:</span><br><span class="line">  name: openldap-client1</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  secretName: client-test1</span><br><span class="line">  issuerRef:</span><br><span class="line">    name: ca-issuer</span><br><span class="line">    kind: Issuer</span><br><span class="line">  commonName: ldapadmin</span><br></pre></td></tr></table></figure>
 
@@ -266,19 +269,7 @@
 <p>demand | hard | true：检查客户端证书，没有证书或证书错误都将立即终止连接。</p>
 <p>helm 安装的openldap默认为demand。</p>
 </blockquote>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/flowchart/1.6.5/flowchart.min.js"></script><textarea id="flowchart-0-code" style="display: none">chart/mermaid
-graph LR
 
-client[LDAP Client] --TLS 连接--> ldap[LDAP Server]
-client -.- client.crt
-client -.- client.key
-subgraph server
-ldap -.- ca.crt
-ldap -.- ldap.crt
-ldap -.- ldap.key
-end
-ca.crt --颁发--> ldap.crt
-ca.crt --颁发--> client.crt</textarea><textarea id="flowchart-0-options" style="display: none">{"scale":1,"line-width":2,"line-length":50,"text-margin":10,"font-size":12}</textarea><script>  var code = document.getElementById("flowchart-0-code").value;  var options = JSON.parse(decodeURIComponent(document.getElementById("flowchart-0-options").value));  var diagram = flowchart.parse(code);  diagram.drawSVG("flowchart-0", options);</script>
       
 
       
@@ -525,11 +516,11 @@ MathJax.Hub.Queue(function() {
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">心外无物</a></li>
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
       
         
     </ul>
@@ -600,10 +591,6 @@ MathJax.Hub.Queue(function() {
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">云计算</a>
               </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">证书</a>
-              </li>
             
             <div class="clearfix"></div>
           </ul>
@@ -654,27 +641,15 @@ MathJax.Hub.Queue(function() {
         <ul class="search-ul">
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接1</a>
+              <a href="https://www.docker.com" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>docker官网</a>
             </li>
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接2</a>
+              <a href="https://kubernetes.io" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>kubernetes官网</a>
             </li>
           
             <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接3</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接4</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接5</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://localhost:4000/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>友情链接6</a>
+              <a href="https://www.bjzdgt.com" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>我的公司</a>
             </li>
           
         </ul>
@@ -685,7 +660,7 @@ MathJax.Hub.Queue(function() {
     
     	<section class="tools-section tools-section-me" q-show="aboutme">
   	  	
-  	  		<div class="aboutme-wrap" id="js-aboutme">汝未看此花时，此花与汝同归于寂。汝来看此花时，此花颜色一时明白过来。便知此花不在汝之心外。</div>
+  	  		<div class="aboutme-wrap" id="js-aboutme">汝未看此花时，&lt;br&gt;此花与汝同归于寂。&lt;br&gt;汝来看此花时，&lt;br&gt;此花颜色一时明白过来。&lt;br&gt;便知此花不在汝之心外。</div>
   	  	
     	</section>
     
