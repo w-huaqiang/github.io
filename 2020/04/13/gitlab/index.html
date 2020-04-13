@@ -6,16 +6,21 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://huaqiang.art">
-  <title>Category: docker | 华强的技术小站</title>
+  <title>helm 安装gitlab | 华强的技术小站</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="一个IT工程师技术博客">
-<meta property="og:type" content="website">
-<meta property="og:title" content="华强的技术小站">
-<meta property="og:url" content="http://huaqiang.art/categories/docker/index.html">
+  <meta name="description" content="在k8s上安装gitlab，使用helm 安装gitlab在官网上需要翻墙，此处设置相关参数使之不翻墙即可安装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="helm 安装gitlab">
+<meta property="og:url" content="http://huaqiang.art/2020/04/13/gitlab/index.html">
 <meta property="og:site_name" content="华强的技术小站">
-<meta property="og:description" content="一个IT工程师技术博客">
+<meta property="og:description" content="在k8s上安装gitlab，使用helm 安装gitlab在官网上需要翻墙，此处设置相关参数使之不翻墙即可安装。">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-04-13T13:27:20.000Z">
+<meta property="article:modified_time" content="2020-04-13T13:33:01.638Z">
 <meta property="article:author" content="王华强">
+<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="gitlab">
+<meta property="article:tag" content="helm">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="华强的技术小站" type="application/atom+xml">
@@ -156,75 +161,189 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-gitlab" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/23/top/" class="archive-article-date">
-  	<time datetime="2019-05-23T12:37:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-23</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/23/top/">docker中的top命令</a>
+    <h1 class="article-title" itemprop="name">
+      helm 安装gitlab
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
+        
+        <a href="/2020/04/13/gitlab/" class="archive-article-date">
+  	<time datetime="2020-04-13T13:27:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-04-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>helm 一键安装gitlab在k8s之上。由于官网chart需要下载国外的组件，故此处使用阿里镜像来满足国内在k8s之上的安装</p>
+<a id="more"></a>
+<h4 id="创建命名空间"><a href="#创建命名空间" class="headerlink" title="创建命名空间"></a>创建命名空间</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$kubectl</span> create ns nginx-ingress</span><br></pre></td></tr></table></figure>
+
+<h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">helm  install gitlab-pro gitlab/gitlab \</span><br><span class="line">--namespace gitlab \</span><br><span class="line">--version 3.2.1 \</span><br><span class="line">--<span class="built_in">set</span> global.edition=ce \</span><br><span class="line">--<span class="built_in">set</span> global.hosts.domain=gitlab.devops.nari \</span><br><span class="line">--<span class="built_in">set</span> certmanager.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> global.ingress.configureCertmanager=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> upgradeCheck.enabled=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> certmanager.createCustomResource=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> nginx-ingress.enabled=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> certmanager.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> prometheus.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> gitlab-runner.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> gitlab.registry.enabled=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> shared-secrets.selfsign.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/cfssl-self-sign \</span><br><span class="line">--<span class="built_in">set</span> global.kubectl.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/kubectl \</span><br><span class="line">--<span class="built_in">set</span> global.certificates.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/alpine-certificates \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.sidekiq.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-sidekiq-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.task-runner.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-task-runner-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.migrations.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-task-runner-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.unicorn.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-webservice-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.unicorn.workhorse.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-workhorse-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.gitaly.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitaly \</span><br><span class="line">--<span class="built_in">set</span> gitlab.gitlab-shell.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-shell \</span><br><span class="line">--<span class="built_in">set</span> gitlab.gitlab-exporter.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-exporter \</span><br><span class="line">--<span class="built_in">set</span> registry.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-container-registry</span><br></pre></td></tr></table></figure>
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">linux</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">k8s</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">docker</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">gitlab</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">helm</a>
         		</li>
       		
 		</ul>
 	</div>
 
-          
+      
 	<div class="article-category tagcloud">
 		<i class="icon-book icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/docker//" class="article-tag-list-link color2">docker</a>
+        			<a href="/categories/k8s//" class="article-tag-list-link color4">k8s</a>
         		</li>
       		
 		</ul>
 	</div>
 
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://huaqiang.art/2020/04/13/gitlab/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
   
   
-    </div></section>
+    <a href="/2020/04/01/openldap/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">helm安装openldap</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+  
+  
   
 
-    
+  
+
+  
+
+  
 
 
           </div>
@@ -247,10 +366,10 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
-		isCategory: true,
+		isCategory: false,
 		open_in_new: false,
 		toc_hide_index: true,
 		root: "/",

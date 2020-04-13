@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://huaqiang.art/"/>
-  <updated>2020-04-04T11:00:07.772Z</updated>
+  <updated>2020-04-13T13:33:01.638Z</updated>
   <id>http://huaqiang.art/</id>
   
   <author>
@@ -15,6 +15,33 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>helm 安装gitlab</title>
+    <link href="http://huaqiang.art/2020/04/13/gitlab/"/>
+    <id>http://huaqiang.art/2020/04/13/gitlab/</id>
+    <published>2020-04-13T13:27:20.000Z</published>
+    <updated>2020-04-13T13:33:01.638Z</updated>
+    
+    <content type="html"><![CDATA[<p>helm 一键安装gitlab在k8s之上。由于官网chart需要下载国外的组件，故此处使用阿里镜像来满足国内在k8s之上的安装</p><a id="more"></a><h4 id="创建命名空间"><a href="#创建命名空间" class="headerlink" title="创建命名空间"></a>创建命名空间</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$kubectl</span> create ns nginx-ingress</span><br></pre></td></tr></table></figure><h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">helm  install gitlab-pro gitlab/gitlab \</span><br><span class="line">--namespace gitlab \</span><br><span class="line">--version 3.2.1 \</span><br><span class="line">--<span class="built_in">set</span> global.edition=ce \</span><br><span class="line">--<span class="built_in">set</span> global.hosts.domain=gitlab.devops.nari \</span><br><span class="line">--<span class="built_in">set</span> certmanager.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> global.ingress.configureCertmanager=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> upgradeCheck.enabled=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> certmanager.createCustomResource=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> nginx-ingress.enabled=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> certmanager.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> prometheus.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> gitlab-runner.install=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> gitlab.registry.enabled=<span class="literal">false</span> \</span><br><span class="line">--<span class="built_in">set</span> shared-secrets.selfsign.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/cfssl-self-sign \</span><br><span class="line">--<span class="built_in">set</span> global.kubectl.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/kubectl \</span><br><span class="line">--<span class="built_in">set</span> global.certificates.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/alpine-certificates \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.sidekiq.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-sidekiq-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.task-runner.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-task-runner-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.migrations.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-task-runner-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.unicorn.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-webservice-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.global.communityImages.unicorn.workhorse.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-workhorse-ce \</span><br><span class="line">--<span class="built_in">set</span> gitlab.gitaly.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitaly \</span><br><span class="line">--<span class="built_in">set</span> gitlab.gitlab-shell.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-shell \</span><br><span class="line">--<span class="built_in">set</span> gitlab.gitlab-exporter.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-exporter \</span><br><span class="line">--<span class="built_in">set</span> registry.image.repository=registry.cn-qingdao.aliyuncs.com/imageofout/gitlab-container-registry</span><br></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      在k8s上安装gitlab，使用helm 安装gitlab在官网上需要翻墙，此处设置相关参数使之不翻墙即可安装。
+    
+    </summary>
+    
+    
+      <category term="k8s" scheme="http://huaqiang.art/categories/k8s/"/>
+    
+    
+      <category term="k8s" scheme="http://huaqiang.art/tags/k8s/"/>
+    
+      <category term="gitlab" scheme="http://huaqiang.art/tags/gitlab/"/>
+    
+      <category term="helm" scheme="http://huaqiang.art/tags/helm/"/>
+    
+  </entry>
   
   <entry>
     <title>helm安装openldap</title>
