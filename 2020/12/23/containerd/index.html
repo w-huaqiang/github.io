@@ -6,17 +6,24 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://huaqiang.art">
-  <title>Tag: 监控 | 华强的技术小站</title>
+  <title>DevOps三步工作法 | 华强的技术小站</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="一个IT工程师技术博客">
-<meta property="og:type" content="website">
-<meta property="og:title" content="华强的技术小站">
-<meta property="og:url" content="http://huaqiang.art/tags/%E7%9B%91%E6%8E%A7/index.html">
+  <meta name="description" content="kubernetes在1.20宣布删除docker-shim,如何切换docker到containerd">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DevOps三步工作法">
+<meta property="og:url" content="http://huaqiang.art/2020/12/23/containerd/index.html">
 <meta property="og:site_name" content="华强的技术小站">
-<meta property="og:description" content="一个IT工程师技术博客">
+<meta property="og:description" content="kubernetes在1.20宣布删除docker-shim,如何切换docker到containerd">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huaqiang.art/assets/img/kubelet.png">
+<meta property="og:image" content="http://huaqiang.art/assets/img/kubelet-docker.png">
+<meta property="og:image" content="http://huaqiang.art/assets/img/kubelet-containerd.png">
+<meta property="article:published_time" content="2020-12-23T07:27:20.000Z">
+<meta property="article:modified_time" content="2021-01-06T08:37:07.380Z">
 <meta property="article:author" content="王华强">
+<meta property="article:tag" content="docker">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huaqiang.art/assets/img/kubelet.png">
   
     <link rel="alternative" href="/atom.xml" title="华强的技术小站" type="application/atom+xml">
   
@@ -156,56 +163,116 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-containerd" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2019" class="archive-year">2019</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2019/05/28/alertmanager/" class="archive-article-date">
-  	<time datetime="2019-05-28T12:30:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-05-28</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2019/05/28/alertmanager/">prometheus 配置钉钉告警</a>
+    <h1 class="article-title" itemprop="name">
+      DevOps三步工作法
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
+        
+        <a href="/2020/12/23/containerd/" class="archive-article-date">
+  	<time datetime="2020-12-23T07:27:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-12-23</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="1-kubelet如何使用容器运行时"><a href="#1-kubelet如何使用容器运行时" class="headerlink" title="1. kubelet如何使用容器运行时"></a>1. kubelet如何使用容器运行时</h2><a id="more"></a>
+<img src="/assets/img/kubelet.png" alt="kubelet" width="400" >
+
+<p>在早期 rkt 和 docker 争霸时，kubelet 中需要维护两坨代码分别来适配 docker 和 rkt ，这使得 kubelet 每次发布新功能都需要考虑对运行时组件的适配问题，严重拖慢了新版本发布速度。</p>
+<p>容器运行时可能未来越来越多，如果出现新的运行时，kubelet可能还需要适配新的运行时。于是2016年，k8s提出来容器运行时接口CRI（container Runtime Interface）。CRI是对容器操作的一组抽象，只要容器运行时实现了这个接口，kubelet就能通过这个接口来适配他。不过，docker并没有实现这个接口，似乎也不打算实现这个接口，kubelet只能在内部维护一个称之为<code>docker-shim</code>组件，这个组件充当了docker和CRI的转接器，kubelet在创建容器时通过CRI调用<code>docker-shim</code>，而<code>docker-shim</code>再通过http把请求转给docker。</p>
+<blockquote>
+<p>注意: 现版本docker中，已经使用containerd作为底层容器运行时</p>
+</blockquote>
+<p>所以，若改用containerd替代docker，则kubelet创建容器的调用链如红色所示。可以直接通过一次<code>grpc</code>调用containerd。</p>
+<p>通过上面可知k8s要删除docker是可以理解的一部分了。</p>
+<blockquote>
+<p>其实这是谁胳膊粗的问题，若docker的用户多，且大家都使用，估计也不会剔除它</p>
+</blockquote>
+<h2 id="2-迁移kubelet容器运行时"><a href="#2-迁移kubelet容器运行时" class="headerlink" title="2. 迁移kubelet容器运行时"></a>2. 迁移kubelet容器运行时</h2><h3 id="2-1-关闭节点服务"><a href="#2-1-关闭节点服务" class="headerlink" title="2.1 关闭节点服务"></a>2.1 关闭节点服务</h3><p>关闭相关服务</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line">systemctl stop kubelet</span><br><span class="line">systemctl stop docker</span><br><span class="line">systemctl stop containerd</span><br></pre></td></tr></table></figure>
+
+<p>由于新版本中的docker在安装时默认使用<code>containerd</code>做为后端容器运行时，故不需要再安装<code>containerd</code></p>
+<h3 id="2-2-修改containerd的plugin"><a href="#2-2-修改containerd的plugin" class="headerlink" title="2.2 修改containerd的plugin"></a>2.2 修改containerd的plugin</h3><p>containerd中默认已经实现了cri，但是以plugin的形式。在默认安装的过程中，这个plugin一般是disable状态，需要将其开启</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 将其注释掉</span></span><br><span class="line"><span class="comment">#disabled_plugins = ["cri"]</span></span><br><span class="line"></span><br><span class="line">version = 2</span><br><span class="line">[plugins.<span class="string">"io.containerd.grpc.v1.cri"</span>]</span><br><span class="line">  sandbox_image = <span class="string">"registry.cn-qingdao.aliyuncs.com/huaqiangk8s/pause:3.2"</span></span><br><span class="line">  [plugins.<span class="string">"io.containerd.grpc.v1.cri"</span>.containerd]</span><br><span class="line">    default_runtime_name = <span class="string">"runc"</span></span><br><span class="line">    [plugins.<span class="string">"io.containerd.grpc.v1.cri"</span>.containerd.runtimes.runc]</span><br><span class="line">      runtime_type = <span class="string">"io.containerd.runc.v2"</span></span><br><span class="line">      [plugins.<span class="string">"io.containerd.grpc.v1.cri"</span>.containerd.runtimes.runc.options]</span><br><span class="line">        SystemdCgroup = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>一般默认cni和stream配置即可满足kubelet运行使用<br>可以通过<code>crictl info</code>查看，但是某些自定义的k8s安装需要配置<br>cni是被containerd-cri调用</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[plugins.cri.cni]</span></span><br><span class="line">    bin_dir = "/opt/cni/bin"</span><br><span class="line">    conf_dir = "/etc/cni/net.d" </span><br></pre></td></tr></table></figure>
+<p>stream是kubectl exec/log等命令建立流转发通道</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"> [plugins.cri]</span></span><br><span class="line"><span class="attr">stream_server_address</span> = <span class="string">"127.0.0.1"</span></span><br><span class="line"><span class="attr">stream_server_port</span> = <span class="string">"0"</span></span><br><span class="line"><span class="attr">enable_tls_streaming</span> = <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl start containerd</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-安装配置crictl客户端工具"><a href="#2-2-安装配置crictl客户端工具" class="headerlink" title="2.2 安装配置crictl客户端工具"></a>2.2 安装配置crictl客户端工具</h3><p>下载工具</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.19.0/crictl-v1.19.0-linux-amd64.tar.gz</span><br><span class="line">tar -xzvf crictl-v1.19.0-linux-amd64.tar.gz </span><br><span class="line">mv crictl /usr/<span class="built_in">local</span>/bin/</span><br></pre></td></tr></table></figure>
+
+<p>配置<br>修改配置文件 <code>/etc/crictl.yaml</code></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">root@node6 lib]<span class="comment"># cat /etc/crictl.yaml </span></span><br><span class="line">runtime-endpoint: unix:///var/run/containerd/containerd.sock</span><br><span class="line">image-endpoint: unix:///var/run/containerd/containerd.sock</span><br><span class="line">timeout: 10</span><br><span class="line">debug: <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>测试使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@node6 lib]<span class="comment"># crictl pods</span></span><br><span class="line">DEBU[0000] get runtime connection                       </span><br><span class="line">DEBU[0000] connect using endpoint <span class="string">'unix:///var/run/containerd/containerd.sock'</span> with <span class="string">'10s'</span> timeout </span><br><span class="line">POD ID              CREATED             STATE               NAME                                              NAMESPACE           ATTEMPT             RUNTIME</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-修改kubelet启动参数"><a href="#2-3-修改kubelet启动参数" class="headerlink" title="2.3 修改kubelet启动参数"></a>2.3 修改kubelet启动参数</h3><p>查看kubelet启动方式，添加启动参数</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--container-runtime=remote</span><br><span class="line">--container-runtime-endpoint=unix:///var/run/containerd/containerd.sock</span><br></pre></td></tr></table></figure>
+
+<p>重启kubelet</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl restart kubelet</span><br></pre></td></tr></table></figure>
+
+<p>查看相关节点的<code>CONTAINER-RUNTIME</code>是否已经修改</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@node1 ~]# kubectl get no -o wide</span><br><span class="line">NAME    STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                KERNEL-VERSION               CONTAINER-RUNTIME</span><br><span class="line">node1   Ready    master   61d   v1.18.9   3.1.20.120    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node2   Ready    master   61d   v1.18.9   3.1.20.121    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    containerd:&#x2F;&#x2F;1.3.7</span><br><span class="line">node3   Ready    master   61d   v1.18.9   3.1.20.122    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node4   Ready    &lt;none&gt;   61d   v1.18.9   3.1.20.123    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node5   Ready    &lt;none&gt;   61d   v1.18.9   3.1.20.124    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node6   Ready    &lt;none&gt;   61d   v1.18.9   3.1.20.125    &lt;none&gt;        CentOS Linux 7 (Core)   3.10.0-1160.6.1.el7.x86_64   containerd:&#x2F;&#x2F;1.4.3</span><br></pre></td></tr></table></figure>
+
+<h3 id="kubelet使用docker和containerd不同的架构图"><a href="#kubelet使用docker和containerd不同的架构图" class="headerlink" title="kubelet使用docker和containerd不同的架构图"></a>kubelet使用docker和containerd不同的架构图</h3><img src="/assets/img/kubelet-docker.png" alt="docker" width="400" >
+
+<img src="/assets/img/kubelet-containerd.png" alt="cotainerd" width="400" >
+
+      
+
+      
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">k8s</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">prometheus</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">监控</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">docker</a>
         		</li>
       		
 		</ul>
 	</div>
 
-          
+      
 	<div class="article-category tagcloud">
 		<i class="icon-book icon"></i>
 		<ul class="article-tag-list">
@@ -218,17 +285,117 @@
 	</div>
 
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://huaqiang.art/2020/12/23/containerd/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
   
   
-    </div></section>
+    <a href="/2020/12/23/devops_setp/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">DevOps三步工作法</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-kubelet如何使用容器运行时"><span class="toc-number">1.</span> <span class="toc-text">1. kubelet如何使用容器运行时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-迁移kubelet容器运行时"><span class="toc-number">2.</span> <span class="toc-text">2. 迁移kubelet容器运行时</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-关闭节点服务"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 关闭节点服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-修改containerd的plugin"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 修改containerd的plugin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-安装配置crictl客户端工具"><span class="toc-number">2.3.</span> <span class="toc-text">2.2 安装配置crictl客户端工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-修改kubelet启动参数"><span class="toc-number">2.4.</span> <span class="toc-text">2.3 修改kubelet启动参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#kubelet使用docker和containerd不同的架构图"><span class="toc-number">2.5.</span> <span class="toc-text">kubelet使用docker和containerd不同的架构图</span></a></li></ol></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
+        
+    </div>
+</aside>
+
+
+
+  
+  
   
 
-    
+  
+
+  
+
+  
 
 
           </div>
@@ -251,9 +418,9 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
-		isTag: true,
+		isTag: false,
 		isCategory: false,
 		open_in_new: false,
 		toc_hide_index: true,
