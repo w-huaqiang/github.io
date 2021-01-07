@@ -6,20 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://huaqiang.art">
-  <title>DevOps三步工作法 | 华强的技术小站</title>
+  <title>切换k8s容器运行时docker到containerd | 华强的技术小站</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="kubernetes在1.20宣布删除docker-shim,如何切换docker到containerd">
 <meta property="og:type" content="article">
-<meta property="og:title" content="DevOps三步工作法">
-<meta property="og:url" content="http://huaqiang.art/2020/12/23/containerd/index.html">
+<meta property="og:title" content="切换k8s容器运行时docker到containerd">
+<meta property="og:url" content="http://huaqiang.art/2020/01/04/containerd/index.html">
 <meta property="og:site_name" content="华强的技术小站">
 <meta property="og:description" content="kubernetes在1.20宣布删除docker-shim,如何切换docker到containerd">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://huaqiang.art/assets/img/kubelet.png">
 <meta property="og:image" content="http://huaqiang.art/assets/img/kubelet-docker.png">
 <meta property="og:image" content="http://huaqiang.art/assets/img/kubelet-containerd.png">
-<meta property="article:published_time" content="2020-12-23T07:27:20.000Z">
-<meta property="article:modified_time" content="2021-01-06T08:37:07.380Z">
+<meta property="article:published_time" content="2020-01-04T07:27:20.000Z">
+<meta property="article:modified_time" content="2021-01-07T07:10:31.535Z">
 <meta property="article:author" content="王华强">
 <meta property="article:tag" content="docker">
 <meta name="twitter:card" content="summary">
@@ -170,21 +170,21 @@
         
   
     <h1 class="article-title" itemprop="name">
-      DevOps三步工作法
+      切换k8s容器运行时docker到containerd
     </h1>
   
 
         
-        <a href="/2020/12/23/containerd/" class="archive-article-date">
-  	<time datetime="2020-12-23T07:27:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-12-23</time>
+        <a href="/2020/01/04/containerd/" class="archive-article-date">
+  	<time datetime="2020-01-04T07:27:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-01-04</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="1-kubelet如何使用容器运行时"><a href="#1-kubelet如何使用容器运行时" class="headerlink" title="1. kubelet如何使用容器运行时"></a>1. kubelet如何使用容器运行时</h2><a id="more"></a>
-<img src="/assets/img/kubelet.png" alt="kubelet" width="400" >
+        <h2 id="1-kubelet如何使用容器运行时"><a href="#1-kubelet如何使用容器运行时" class="headerlink" title="1. kubelet如何使用容器运行时"></a>1. kubelet如何使用容器运行时</h2><img src="/assets/img/kubelet.png" alt="kubelet" width="700" >
+<a id="more"></a>
 
 <p>在早期 rkt 和 docker 争霸时，kubelet 中需要维护两坨代码分别来适配 docker 和 rkt ，这使得 kubelet 每次发布新功能都需要考虑对运行时组件的适配问题，严重拖慢了新版本发布速度。</p>
 <p>容器运行时可能未来越来越多，如果出现新的运行时，kubelet可能还需要适配新的运行时。于是2016年，k8s提出来容器运行时接口CRI（container Runtime Interface）。CRI是对容器操作的一组抽象，只要容器运行时实现了这个接口，kubelet就能通过这个接口来适配他。不过，docker并没有实现这个接口，似乎也不打算实现这个接口，kubelet只能在内部维护一个称之为<code>docker-shim</code>组件，这个组件充当了docker和CRI的转接器，kubelet在创建容器时通过CRI调用<code>docker-shim</code>，而<code>docker-shim</code>再通过http把请求转给docker。</p>
@@ -229,9 +229,9 @@
 <p>查看相关节点的<code>CONTAINER-RUNTIME</code>是否已经修改</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@node1 ~]# kubectl get no -o wide</span><br><span class="line">NAME    STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                KERNEL-VERSION               CONTAINER-RUNTIME</span><br><span class="line">node1   Ready    master   61d   v1.18.9   3.1.20.120    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node2   Ready    master   61d   v1.18.9   3.1.20.121    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    containerd:&#x2F;&#x2F;1.3.7</span><br><span class="line">node3   Ready    master   61d   v1.18.9   3.1.20.122    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node4   Ready    &lt;none&gt;   61d   v1.18.9   3.1.20.123    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node5   Ready    &lt;none&gt;   61d   v1.18.9   3.1.20.124    &lt;none&gt;        CentOS Linux 7 (Core)   5.9.1-1.el7.elrepo.x86_64    docker:&#x2F;&#x2F;19.3.13</span><br><span class="line">node6   Ready    &lt;none&gt;   61d   v1.18.9   3.1.20.125    &lt;none&gt;        CentOS Linux 7 (Core)   3.10.0-1160.6.1.el7.x86_64   containerd:&#x2F;&#x2F;1.4.3</span><br></pre></td></tr></table></figure>
 
-<h3 id="kubelet使用docker和containerd不同的架构图"><a href="#kubelet使用docker和containerd不同的架构图" class="headerlink" title="kubelet使用docker和containerd不同的架构图"></a>kubelet使用docker和containerd不同的架构图</h3><img src="/assets/img/kubelet-docker.png" alt="docker" width="400" >
+<h3 id="kubelet使用docker和containerd不同的架构图"><a href="#kubelet使用docker和containerd不同的架构图" class="headerlink" title="kubelet使用docker和containerd不同的架构图"></a>kubelet使用docker和containerd不同的架构图</h3><img src="/assets/img/kubelet-docker.png" alt="docker" width="700" >
 
-<img src="/assets/img/kubelet-containerd.png" alt="cotainerd" width="400" >
+<img src="/assets/img/kubelet-containerd.png" alt="cotainerd" width="700" >
 
       
 
@@ -333,7 +333,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://huaqiang.art/2020/12/23/containerd/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://huaqiang.art/2020/01/04/containerd/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -347,9 +347,18 @@
   
 <nav id="article-nav">
   
+    <a href="/2020/02/10/rook-install/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          rook安装及使用ceph rbd
+        
+      </div>
+    </a>
   
-    <a href="/2020/12/23/devops_setp/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">DevOps三步工作法</div>
+  
+    <a href="/2019/08/16/whyk8s/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">我为什么会被kubernetes圈粉</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -718,20 +727,5 @@ MathJax.Hub.Queue(function() {
 
 </div>
   </div>
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ["$","$"], ["\\(","\\)"] ],
-            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-            processEscapes: true
-        }
-    });
-    MathJax.Hub.Queue(function() {
-        var all = MathJax.Hub.getAllJax();
-        for (var i = 0; i < all.length; ++i)
-            all[i].SourceElement().parentNode.className += ' has-jax';
-    });
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 </body>
 </html>
